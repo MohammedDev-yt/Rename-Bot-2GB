@@ -230,6 +230,19 @@ async def del_thumb(_, msg):
     await set_user(msg.from_user.id, {"thumb": ""})
     await msg.reply("Thumbnail deleted ✔")
 
+# ---------------- FILE / VIDEO CHOOSER ----------------
+@bot.on_message(filters.document | filters.video)
+async def choose(_, msg):
+
+    buttons = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("📄 File Mode", callback_data="file"),
+            InlineKeyboardButton("🎬 Video Mode", callback_data="video")
+        ]
+    ])
+
+    await msg.reply("Choose mode:", reply_markup=buttons)
+
 # ---------------- RENAME CORE + FFMPEG ----------------
 @bot.on_message(filters.document | filters.video)
 async def rename(_, msg):
@@ -354,14 +367,26 @@ async def broadcast(_, msg):
 
     text = msg.text.split(None, 1)[1]
 
-    async for user in users.find():
+    total = 0
+    success = 0
+    failed = 0
+
+    users_list = users.find({})
+
+    async for user in users_list:
+        total += 1
         try:
             await bot.send_message(user["_id"], text)
+            success += 1
         except:
-            pass
+            failed += 1
 
-    await msg.reply("Broadcast sent ✔")
-
+    await msg.reply(
+        f"📢 Broadcast Completed ✔\n\n"
+        f"◇ Total Users: {total}\n"
+        f"◇ Successful: {success}\n"
+        f"◇ Unsuccessful: {failed}"
+    )
 # ---------- Callback --------------- #
 @bot.on_callback_query()
 async def cb(_, query: CallbackQuery):
