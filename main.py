@@ -162,42 +162,49 @@ async def save_thumb(_, msg):
     await msg.reply("Thumbnail saved")
 
 # ---------------- RENAME CORE + FFMPEG ----------------
-@bot.on_message(filters.document)
+@bot.on_message(filters.document | filters.video)
 async def rename(_, msg):
     user_id = msg.from_user.id
-    file = msg.document
+
+    file = msg.document or msg.video
 
     user = await get_user(user_id) or {}
 
     prefix = user.get("prefix", "")
     suffix = user.get("suffix", "")
     caption = user.get("caption", "")
+
     meta = user.get("metadata", {})
 
-    new_name = f"{prefix}{file.file_name}{suffix}"
+    # SAFE filename
+    original_name = file.file_name if hasattr(file, "file_name") else "video.mp4"
+    new_name = f"{prefix}{original_name}{suffix}"
 
-    status = await msg.reply("Downloading...")
+    status = await msg.reply("📥 Downloading...")
 
-    file_path = await msg.download(file_name=file.file_name)
+    file_path = await msg.download(file_name=original_name)
 
-    output = f"temp_{new_name}"
+    output = f"temp_{user_id}_{original_name}"
 
-    await status.edit("Applying metadata...")
+    await status.edit("🎬 Applying metadata...")
 
     final = add_metadata(
         file_path,
         output,
         meta.get("title", ""),
         meta.get("author", ""),
-        meta.get("description", "")
+        meta.get("artist", ""),
+        meta.get("audio", ""),
+        meta.get("subtitle", ""),
+        meta.get("video", "")
     )
 
-    await status.edit("Uploading...")
+    await status.edit("📤 Uploading...")
 
-    def prog(current, total):
+    async def prog(current, total):
         try:
-            bar = progress_bar(current, total)
-            status.edit_text(f"Uploading...\n{bar}")
+            percent = int(current * 100 / total)
+            await status.edit(f"📤 Uploading... {percent}%")
         except:
             pass
 
