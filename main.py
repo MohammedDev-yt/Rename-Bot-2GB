@@ -5,7 +5,9 @@
 # ------------------------- #
 import os
 import time
-import asyncio 
+import asyncio
+import ffmpeg
+from PIL import Image
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.types import CallbackQuery
@@ -46,6 +48,40 @@ def time_formatter(seconds):
     m, s = divmod(int(seconds), 60)
     h, m = divmod(m, 60)
     return f"{h}h {m}m {s}s"
+# ------------------------- #
+
+def smart_thumb(path):
+    try:
+        size = os.path.getsize(path)
+
+        # If already small → use directly
+        if size <= 200 * 1024:
+            return path
+
+        # Else compress
+        img = Image.open(path).convert("RGB")
+        img.thumbnail((320, 320))
+        img.save(path, "JPEG", quality=80)
+
+        return path
+    except:
+        return None
+# ------------------------- #
+
+def generate_video_thumb(video_path, output):
+    try:
+        (
+            ffmpeg
+            .input(video_path, ss=1)
+            .output(output, vframes=1)
+            .run(overwrite_output=True)
+        )
+        return output
+    except:
+        return None
+
+# ------------------------- #
+
 bot = Client(
     "rename-bot",
     api_id=API_ID,
@@ -465,6 +501,19 @@ async def cb(_, query: CallbackQuery):
                 user.get("subtitle", ""),
                 user.get("video", "")
             )
+            
+            thumb = user.get("thumb")
+            thumb_path = None
+
+            # If user set thumb
+            if thumb:
+                thumb_path = await bot.download_media(thumb, file_name=f"thumb_{user_id}.jpg")
+                thumb_path = smart_thumb(thumb_path)
+
+            # If no thumb and video → auto generate
+            elif data == "video":
+                thumb_path = f"auto_thumb_{user_id}.jpg"
+                thumb_path = generate_video_thumb(file_path, thumb_path)
 
             await query.message.edit_text("⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡\n📤 Uploading...")
 
@@ -499,19 +548,27 @@ async def cb(_, query: CallbackQuery):
                 await msg.reply_video(
                     video=final,
                     caption=caption,
+                    thumb=thumb_path,
                     progress=prog
-                )
+                ) 
             else:
                 await msg.reply_document(
                     document=final,
                     file_name=new_name,
                     caption=caption,
+                    thumb=thumb_path,
                     progress=prog
                 )
 
             try:
                 os.remove(file_path)
                 os.remove(final)
+            except:
+                pass  
+
+            try:
+                if thumb_path and os.path.exists(thumb_path):
+                   os.remove(thumb_path)
             except:
                 pass
 
