@@ -143,7 +143,7 @@ bot = Client(
 )
 
 # ---------------- START ----------------
-bot.on_message(filters.command("start"))
+@bot.on_message(filters.command("start"))
 async def start(_, message):
 
     if await is_banned(message.from_user.id):
@@ -661,49 +661,49 @@ async def cb(_, query: CallbackQuery):
             if await is_banned(user_id):
                 return await query.answer("🚫 Banned user", show_alert=True)
 
-            active_tasks[user_id] = True
-
             if user_id not in user_files:
                 return await query.answer("Send file again ❌", show_alert=True)
 
-            msg = user_files[user_id]
+            msg = user_files[user_id]   
+
+            active_tasks[user_id] = True
+ 
+            file = msg.document or msg.video
+            is_video = msg.video is not None  # ✅ FIX 1
 
             await query.message.edit_text(
                 "⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡\n📥 Downloading...",
-            reply_markup=InlineKeyboardMarkup([
-                        [InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_{user_id}")]
-                    ])
+        reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_{user_id}")]
+                ])
             )
 
             start_time = time.time()
 
             async def dprog(current, total):
                 if not active_tasks.get(user_id):
-                    raise Exception("Cancelled")   
-                try:
-                    now = time.time()
-                    diff = now - start_time
+                    raise Exception("Cancelled")
 
-                    percent = current * 100 / total
-                    speed = current / diff if diff > 0 else 0
-                    eta = (total - current) / speed if speed > 0 else 0
+                now = time.time()
+                diff = now - start_time
 
-                    filled = int(percent / 10)
-                    bar = "⬢" * filled + "⬡" * (10 - filled)
+                percent = current * 100 / total
+                speed = current / diff if diff > 0 else 0
+                eta = (total - current) / speed if speed > 0 else 0
 
-                    text = f"""{bar}
-            📥 Downloading...
+                filled = int(percent / 10)
+                bar = "⬢" * filled + "⬡" * (10 - filled)
 
-            <b>» Done</b> : {round(percent, 2)}%
-            <b>» Size</b> : {humanbytes(current)} | {humanbytes(total)}
-            <b>» Speed</b> : {humanbytes(speed)}/s
-            <b>» ETA</b> : {time_formatter(eta)}
-            """
+                text = f"""{bar}
+ 📥 Downloading...
 
-                    await query.message.edit_text(text)
+<b>» Done</b> : {round(percent, 2)}%
+<b>» Size</b> : {humanbytes(current)} | {humanbytes(total)}
+<b>» Speed</b> : {humanbytes(speed)}/s
+<b>» ETA</b> : {time_formatter(eta)}
+"""
 
-                except:
-                    pass
+                await query.message.edit_text(text)
 
             file_path = await msg.download(file_name=file.file_name, progress=dprog)
 
@@ -728,60 +728,56 @@ async def cb(_, query: CallbackQuery):
                 user.get("subtitle", ""),
                 user.get("video", "")
             )
-            
+
             thumb = user.get("thumb")
             thumb_path = None
 
-            # If user set thumb
             if thumb:
                 thumb_path = await bot.download_media(thumb, file_name=f"thumb_{user_id}.jpg")
                 thumb_path = smart_thumb(thumb_path)
 
-            # If no thumb and video → auto generate
-            elif data == "video":
+            elif is_video:   
                 thumb_path = f"auto_thumb_{user_id}.jpg"
                 thumb_path = generate_video_thumb(file_path, thumb_path)
 
-                if not thumb_path or not os.path.exists(thumb_path):
-                    thumb_path = None
+            if not thumb_path or not os.path.exists(thumb_path):
+                thumb_path = None
+
             await query.message.edit_text("⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡\n📤 Uploading...")
 
             start_time = time.time()
 
             async def prog(current, total):
                 if not active_tasks.get(user_id):
-                    return 
-                try:
-                    now = time.time()
-                    diff = now - start_time
+                    return
 
-                    percent = current * 100 / total
-                    speed = current / diff if diff > 0 else 0
-                    eta = (total - current) / speed if speed > 0 else 0
+                now = time.time()
+                diff = now - start_time
 
-                    filled = int(percent / 10)
-                    bar = "⬢" * filled + "⬡" * (10 - filled)
+                percent = current * 100 / total
+                speed = current / diff if diff > 0 else 0
+                eta = (total - current) / speed if speed > 0 else 0
 
-                    text = f"""{bar}
+                filled = int(percent / 10)
+                bar = "⬢" * filled + "⬡" * (10 - filled)
 
-            <b>» Done</b> : {round(percent, 2)}%
-            <b>» Size</b> : {humanbytes(current)} | {humanbytes(total)}
-            <b>» Speed</b> : {humanbytes(speed)}/s
-            <b>» ETA</b> : {time_formatter(eta)}
-            """
+                text = f"""{bar}
 
-                    await query.message.edit_text(text)
+<b>» Done</b> : {round(percent, 2)}%
+<b>» Size</b> : {humanbytes(current)} | {humanbytes(total)}
+<b>» Speed</b> : {humanbytes(speed)}/s
+<b>» ETA</b> : {time_formatter(eta)}
+"""
 
-                except:
-                    pass
+                await query.message.edit_text(text)
 
-            if data == "video":
+            if is_video:
                 await msg.reply_video(
                     video=final,
                     caption=caption,
                     thumb=thumb_path,
                     progress=prog
-                ) 
+                )
             else:
                 await msg.reply_document(
                     document=final,
@@ -795,19 +791,12 @@ async def cb(_, query: CallbackQuery):
                 os.remove(file_path)
                 os.remove(final)
             except:
-                pass  
-
-            try:
-                if thumb_path and os.path.exists(thumb_path):
-                   os.remove(thumb_path)
-            except:
                 pass
 
-            try:
-                await query.message.delete()
-            except:
-                pass
+            if thumb_path and os.path.exists(thumb_path):
+                os.remove(thumb_path)
 
+            await query.message.delete()
             active_tasks.pop(user_id, None)
 
     except Exception as e:
