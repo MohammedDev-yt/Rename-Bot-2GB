@@ -973,9 +973,12 @@ async def cb(_, query: CallbackQuery):
             except:
                 pass
 
-            if thumb_path and os.path.exists(thumb_path):
-            os.remove(thumb_path)
-
+            try:
+                if thumb_path and os.path.exists(thumb_path):
+                    os.remove(thumb_path)
+            except:
+                pass
+ 
             await query.message.delete()
             active_tasks.pop(user_id, None)
                 
