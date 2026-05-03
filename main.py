@@ -143,46 +143,39 @@ bot = Client(
 )
 
 # ---------------- START ----------------
-@bot.on_message(filters.command("start"))
+bot.on_message(filters.command("start"))
 async def start(_, message):
 
-        if await is_banned(message.from_user.id):
-            return await message.reply("🚫 You are banned from using this bot.")
+    if await is_banned(message.from_user.id):
+        return await message.reply("🚫 You are banned from using this bot.")
 
-        await add_user(message.from_user.id)
-    
-        user = message.from_user
+    await add_user(message.from_user.id)
+
+    user = message.from_user
+
+    try:
+        m = await message.reply_text("Jɪɴᴡᴏᴏ Sᴜɴɢ . .")
+        await asyncio.sleep(0.5)
+        await m.delete()
 
         try:
-            m = await message.reply_text("Jɪɴᴡᴏᴏ Sᴜɴɢ . .")
-            await asyncio.sleep(0.5)
-            await m.edit_text("🎊")
-            await asyncio.sleep(0.5)
-            await m.edit_text("⚡")
-            await asyncio.sleep(0.5)
-            await m.edit_text("Mᴀsᴛᴇʀ...")
-            await asyncio.sleep(0.4)
-            await m.delete()
-
-            # sticker
-            try:
-                await message.reply_sticker(
+            await message.reply_sticker(
                 "CAACAgUAAxkBAAEXm-JplJOyujCdKOZhh8m5gC4BJpW52AACaxwAA2epVnjNNttcc5jLHgQ"
-                )
-            except:
-                pass
- 
-            buttons = InlineKeyboardMarkup([
-                [InlineKeyboardButton("• ᴍʏ ᴀʟʟ ᴄᴏᴍᴍᴀɴᴅs •", callback_data='help')],
-                [
-                InlineKeyboardButton('ᴜᴘᴅᴀᴛᴇs', url=UPDATE_CHANNEL),
+            )
+        except:
+            pass
+
+        buttons = InlineKeyboardMarkup([
+            [InlineKeyboardButton("• ᴍʏ ᴀʟʟ ᴄᴏᴍᴍᴀɴᴅs •", callback_data='help')],
+            [
+                InlineKeyboardButton('• ᴜᴘᴅᴀᴛᴇs', url=UPDATE_CHANNEL),
                 InlineKeyboardButton('sᴜᴘᴘᴏʀᴛ •', url=UPDATE_CHANNEL)
-                ],
-                [
-                InlineKeyboardButton('ᴀʙᴏᴜᴛ', callback_data='about'),
-                InlineKeyboardButton('sᴏᴜʀᴄᴇ', callback_data='source')
-                ]
-            ])
+            ],
+            [
+                InlineKeyboardButton('• ᴀʙᴏᴜᴛ', callback_data='about'),
+                InlineKeyboardButton('sᴏᴜʀᴄᴇ •', callback_data='source')
+            ]
+        ])
 
             await message.reply_text(
                 f"Hᴇʏ {user.mention} ♡\n\n"
@@ -197,8 +190,8 @@ async def start(_, message):
                 parse_mode="html"
             )
 
-        except Exception as e:
-            print("START ERROR:", e)
+    except Exception as e:
+        print("START ERROR:", e)
 # ---------------- CAPTION ----------------
 @bot.on_message(filters.command("set_caption"))
 async def set_caption(_, msg):
