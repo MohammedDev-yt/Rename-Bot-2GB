@@ -981,13 +981,11 @@ async def cb(_, query: CallbackQuery):
  
             await query.message.delete()
             active_tasks.pop(user_id, None)
-                
-# ---------------- RUN ----------------
-            keep_alive()
+                # ---------------- RUN ----------------
+keep_alive()
 
-            print("BOT STARTED 🚀")
-            bot.run()
-
+print("BOT STARTED 🚀")
+bot.run()
 # ------------------------- #
 # Don't Remove Credit 
 # Ask Doubt @AU_Bot_Discussion 
