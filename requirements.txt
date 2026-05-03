@@ -9,6 +9,7 @@ tgcrypto
 motor
 flask
 ffmpeg-python
+psutil 
 
 # ------------------------- #
 # Don't Remove Credit 
