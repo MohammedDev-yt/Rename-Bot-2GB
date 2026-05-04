@@ -147,12 +147,10 @@ import re
 def safe_name(name):
     return re.sub(r'[\\\\/:*?"<>|]', '_', name)
 
-def get_thumbnail(bot, user_thumb, is_video, file_path, user_id):
-
-    import os
+async def get_thumbnail(bot, user_thumb, is_video, file_path, user_id):
 
     if user_thumb:
-        path = bot.download_media(user_thumb, file_name=f"thumb_{user_id}.jpg")
+        path = await bot.download_media(user_thumb, file_name=f"thumb_{user_id}.jpg")
         return path
 
     if is_video:
@@ -911,7 +909,7 @@ async def cb(_, query: CallbackQuery):
         # -------- THUMB FIX -------- #
             thumb_path = None
             try:
-                thumb_path = get_thumbnail(
+                thumb_path = await get_thumbnail(
                     bot,
                     thumb,
                     is_video,
