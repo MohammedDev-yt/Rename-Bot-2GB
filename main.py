@@ -778,7 +778,7 @@ async def cb(_, query: CallbackQuery):
             await query.message.edit_text(
                 "• 𝗥𝗲𝗽𝗼 •",
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔗 𝗢𝗽𝗲𝗻 𝗦𝗼𝘂𝗿𝗰𝗲", url="https://github.com/Naruto-Uzumaki-Yt/rename-bot")]
+            [InlineKeyboardButton("🔗 𝗢𝗽𝗲𝗻 𝗦𝗼𝘂𝗿𝗰𝗲", url="https://github.com/MD-Developer-yt/Rename-Bot-2GB")]
              ])
             )
 
