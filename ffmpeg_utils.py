@@ -5,7 +5,6 @@
 # ------------------------- #
 
 import ffmpeg
-import ffmpeg
 import os
 
 def add_metadata(input_file, output_file, title, author, artist, audio, subtitle, video):
@@ -80,6 +79,7 @@ def add_metadata(input_file, output_file, title, author, artist, audio, subtitle
         except Exception as e2:
             print("❌ Rᴇ-Eɴᴄᴏᴅᴇ Aʟsᴏ Fᴀɪʟᴇᴅ:", e2)
             return input_file
+
 # ------------------------- #
 # Don't Remove Credit 
 # Ask Doubt @AU_Bot_Discussion 
