@@ -1942,15 +1942,22 @@ async def cb(_, query: CallbackQuery):
 
                 return
                 
-            # -------- STOP PERSONAL BOT -------- #
+            finally:
 
-            if token:
+                if token:
+                    try:
+                        await personal_bot.stop()
+                    except:
+                        pass
 
-                try:
-                    await personal_bot.stop()
-                except:
-                    pass
+            # -------- FILE SIZE -------- #
 
+            file_size = 0
+
+            try:
+                file_size = os.path.getsize(final)
+            except:
+                pass
 
             # -------- CLEANUP -------- #
 
@@ -1978,11 +1985,7 @@ async def cb(_, query: CallbackQuery):
             # -------- STATS COUNTER -------- #
 
             rename_stats["total_files"] += 1
-
-            try:
-                rename_stats["total_size"] += os.path.getsize(final)
-            except:
-                pass
+            rename_stats["total_size"] += file_size
 
             await query.message.delete()
             active_tasks.pop(user_id, None)
@@ -2072,11 +2075,14 @@ async def user_info(_, msg):
 
     user = msg.from_user
 
+    has_photo = "ɴᴏ ❌"
+
     try:
-        photos = await bot.get_chat_photos(user.id, limit=1)
-        has_photo = "ʏᴇs 🌠"
+        async for _ in bot.get_chat_photos(user.id, limit=1):
+            has_photo = "ʏᴇs 🌠"
+            break
     except:
-        has_photo = "ɴᴏ ❌"
+        pass
 
     bio_text = "Nᴏ Bɪᴏ"
 
@@ -2112,7 +2118,8 @@ async def user_info(_, msg):
         [
             InlineKeyboardButton(
                 "🌐 Vɪᴇᴡ Pʀᴏғɪʟᴇ",
-                url=f"https://t.me/{user.username}"
+                url=f"https://t.me/{user.username}" if
+                user.username else "https://t.me"
             )
         ]
     ])
