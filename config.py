@@ -1,40 +1,48 @@
 # ------------------------- #
-# Don't Remove Credit 
-# Ask Doubt @AU_Bot_Discussion 
-# Owner @Mr_Mohammed_29 
+# Don't Remove Credit
+# Ask Doubt @AU_Bot_Discussion
+# Owner @Mr_Mohammed_29
 # ------------------------- #
 
 import os
 
-# ---------------- BOT CORE ----------------
-API_ID = int(os.getenv("API_ID"))
-API_HASH = os.getenv("API_HASH")
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+class Config:
 
-OWNER_ID = int(os.getenv("OWNER_ID"))
+    # ---------------- BOT CORE ----------------
+    API_ID = int(os.getenv("API_ID"))
+    API_HASH = os.getenv("API_HASH")
+    BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-# ---------------- DATABASE ----------------
-MONGO_URI = os.getenv("MONGO_URI")
+    OWNER_ID = int(os.getenv("OWNER_ID"))
 
-# ---------------- CHANNELS ----------------
-# Force users to join updates channel (optional feature)
+    # ---------------- DATABASE ----------------
+    MONGO_URI = os.getenv("MONGO_URI")
 
-_raw_update = os.getenv("UPDATE_CHANNEL", "https://t.me/Anime_UpdatesAU")
+    # ---------------- CHANNELS ----------------
+    _raw_update = os.getenv("UPDATE_CHANNEL", "https://t.me/Anime_UpdatesAU")
 
-# ✅ FIX: convert @channel or invalid value into valid Telegram URL
-if _raw_update.startswith("@"):
-    UPDATE_CHANNEL = "https://t.me/" + _raw_update[1:]
-elif not _raw_update.startswith("http"):
-    UPDATE_CHANNEL = "https://t.me/Anime_UpdatesAU"
-else:
-    UPDATE_CHANNEL = _raw_update
+    if _raw_update.startswith("@"):
+        UPDATE_CHANNEL = "https://t.me/" + _raw_update[1:]
+    elif not _raw_update.startswith("http"):
+        UPDATE_CHANNEL = "https://t.me/Anime_UpdatesAU"
+    else:
+        UPDATE_CHANNEL = _raw_update
+
+    LOG_CHANNEL = os.getenv("LOG_CHANNEL")
 
 
-# Log channel for bot activities (uploads, errors, users)
-LOG_CHANNEL = os.getenv("LOG_CHANNEL")  # example: -100xxxxxxxxxx
+# ---------------- EXPORT VARIABLES ----------------
+
+API_ID = Config.API_ID
+API_HASH = Config.API_HASH
+BOT_TOKEN = Config.BOT_TOKEN
+OWNER_ID = Config.OWNER_ID
+MONGO_URI = Config.MONGO_URI
+LOG_CHANNEL = Config.LOG_CHANNEL
+UPDATE_CHANNEL = Config.UPDATE_CHANNEL
 
 # ------------------------- #
-# Don't Remove Credit 
-# Ask Doubt @AU_Bot_Discussion 
-# Owner @Mr_Mohammed_29 
+# Don't Remove Credit
+# Ask Doubt @AU_Bot_Discussion
+# Owner @Mr_Mohammed_29
 # ------------------------- #
