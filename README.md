@@ -20,7 +20,7 @@
 ---
 
 **Demo Bot** : <a href="https://t.me/Jinwoo_Rename_bot"><b>Jinwoo Rename bot</b></a>
-<details>
+
 
 ✨ Features
 
@@ -49,6 +49,8 @@
 - 📜 Bot activity logging
 - 🚀 24/7 deployment support
 - 📁 Supports files up to 2GB
+
+<details>
 
 <summary><b>Click Here To Expand Variables</b></summary>
 
