@@ -1,4 +1,3 @@
-
 # ------------------------- #
 # Don't Remove Credit 
 # Ask Doubt @AU_Bot_Discussion 
@@ -10,6 +9,11 @@ import asyncio
 import ffmpeg
 import psutil
 import datetime
+
+# ------------------------- #
+# Don't Remove Credit 
+# Owner @Mr_Mohammed_29
+# ------------------------- #
 
 def log_event(text: str):
     with open("bot_logs.txt", "a", encoding="utf-8") as f:
@@ -90,6 +94,10 @@ def parse_duration(value: str):
     return None
 
 # ------------------------- #
+# ------------------------- #
+# Don't Remove Credit 
+# Owner @Mr_Mohammed_29
+# ------------------------- #
 
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
@@ -115,7 +123,7 @@ def get_home_buttons():
         [InlineKeyboardButton("• ᴍʏ ᴀʟʟ ᴄᴏᴍᴍᴀɴᴅs •", callback_data='help')],
         [
             InlineKeyboardButton('ᴜᴘᴅᴀᴛᴇs', url=update_url),
-            InlineKeyboardButton('sᴜᴘᴘᴏʀᴛ', url="https://t.me/AU_Bot_Discussion")
+            InlineKeyboardButton('Oɴᴇ Pɪᴇᴄᴇ', url="https://t.me/+t_RfBWnTbqNhYWVl")
         ],
         [
             InlineKeyboardButton('ᴀʙᴏᴜᴛ', callback_data='about'),
@@ -1015,6 +1023,28 @@ async def update_stats(file_size):
         upsert=True
     )
 
+# ------------------------- #
+# Don't Remove Credit 
+# Owner @Mr_Mohammed_29
+# ------------------------- #
+
+@bot.on_message(filters.command("renamed"))
+async def renamed(_, msg):
+
+    user = await get_user(msg.from_user.id) or {}
+
+    text = f"""
+┌─── ∘° Yᴏᴜʀ Lɪғᴇᴛɪᴍᴇ Sᴛᴀᴛs °∘ ───┐
+
+➤ Tᴏᴛᴀʟ Rᴇɴᴀᴍᴇs: {user.get("renames", 0)}
+➤ Tᴏᴛᴀʟ Sɪᴢᴇ: {humanbytes(user.get("size", 0))}
+➤ Mᴀx Fɪʟᴇ Sɪᴢᴇ: {humanbytes(user.get("max_size", 0))}
+
+└──────── °∘ ❉ ∘° ─────────┘
+"""
+
+    await msg.reply_text(text)
+    
 # -------- LEADERBOARD DATABASE -------- #
 
 async def update_leaderboard(user_id):
@@ -1111,24 +1141,53 @@ async def stats(_, msg):
 # Owner @Mr_Mohammed_29
 # ------------------------- #
 
-@bot.on_message(filters.command("addedbots"))
-async def added_bots(_, msg):
+# ---------------- ADDED BOT LIST ---------------- #
+
+@bot.on_message(filters.private & filters.command("addedbots"))
+async def addedbots(_, msg):
 
     if msg.from_user.id != OWNER_ID:
-        return await msg.reply("🚫 𝗬𝗼𝘂 𝗮𝗿𝗲 𝗻𝗼𝘁 𝗮𝘂𝘁𝗵𝗼𝗿𝗶𝘇𝗲𝗱 𝘁𝗼 𝘂𝘀𝗲 𝘁𝗵𝗶𝘀 𝗰𝗼𝗺𝗺𝗮𝗻𝗱")
+        return await msg.reply_text("❌ ᴏɴʟʏ ᴏᴡɴᴇʀ ᴄᴀɴ ᴜsᴇ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ.")
 
-    bots = len(upload_bots)
+    user_id = msg.from_user.id
+    data = await get_user_bots(user_id) or {}
 
-    text = f"""
-<b>🤖 Aᴅᴅᴇᴅ Bᴏᴛs Sᴛᴀᴛs</b>
+    bots = data.get("bots", [])
+    active_index = data.get("active", 0)
 
-🤖 Aᴅᴅᴇᴅ Bᴏᴛs: {bots}
-"""
+    if not bots:
+        return await msg.reply_text("❌ ɴᴏ ʙᴏᴛs ᴀᴅᴅᴇᴅ ʏᴇᴛ.")
 
-    await msg.reply_text(
-        text,
-        parse_mode=ParseMode.HTML
+    total_uploads = 0
+    text = "🤖 ᴀᴅᴅᴇᴅ ʙᴏᴛs sᴛᴀᴛᴜs\n\n"
+
+    for i, bot_data in enumerate(bots):
+
+        username = bot_data.get("username", "Unknown")
+        uploads = bot_data.get("uploads", 0)
+
+        total_uploads += uploads
+
+        mark = "🟢" if i == active_index else "⚪"
+
+        text += (
+            f"{mark} @{username}\n"
+            f"   ├ ᴜᴘʟᴏᴀᴅs : {uploads}\n"
+            f"   └ ɪᴅx : {i}\n\n"
+        )
+
+    active_bot = bots[active_index].get("username", "None")
+    last_used = data.get("last_used", "Unknown")
+
+    text += (
+        "━━━━━━━━━━━━━━━\n"
+        f"➤ ᴀᴄᴛɪᴠᴇ ʙᴏᴛ: @{active_bot}\n"
+        f"➤ ᴛᴏᴛᴀʟ ʙᴏᴛs: {len(bots)}\n"
+        f"➤ ᴛᴏᴛᴀʟ ᴜᴘʟᴏᴀᴅs: {total_uploads}\n"
+        f"➤ ʟᴀsᴛ ᴜsᴇᴅ: {last_used}"
     )
+
+    await msg.reply_text(text)
 
 # ----------- BAN | UNBAN -------------- #
 
@@ -1875,6 +1934,16 @@ async def cb(_, query: CallbackQuery):
                         disable_notification=True
                     )
 
+                    await db.users.update_one(
+                        {"_id": msg.from_user.id},
+                        {
+                            "$inc": {
+                                "renames": 1
+                            }
+                        },
+                        upsert=True
+                    )
+
                     await update_leaderboard(user_id)
 
                     dump_id = dump_channels.get(user_id)
@@ -1891,6 +1960,8 @@ async def cb(_, query: CallbackQuery):
                                 height=height,
                                 supports_streaming=True,
                             )
+                            
+                            await progress_msg.delete()
 
                         except Exception as e:
                             print("Dᴜᴍᴘ Eʀʀᴏʀ:", e)
@@ -1909,6 +1980,18 @@ async def cb(_, query: CallbackQuery):
                         progress=prog,
                         disable_notification=True
                     )
+
+                    await db.users.update_one(
+                        {"_id": msg.from_user.id},
+                        {
+                            "$inc": {
+                                "renames": 1
+                            }
+                         },
+                         upsert=True
+                    )
+
+                    await progress_msg.delete()
 
                     await update_leaderboard(user_id)
 
@@ -2040,6 +2123,7 @@ async def leaderboard(_, msg):
         text,
         reply_markup=buttons
     )
+    
 # ---------------- USER INFO ---------------- #
 
 @bot.on_message(filters.private & filters.command("info"))
@@ -2100,7 +2184,7 @@ async def user_info(_, msg):
         text,
         reply_markup=buttons
         )
-
+    
 # ---------------- DONATE ---------------- #
 
 @bot.on_message(filters.private & filters.command("donate"))
