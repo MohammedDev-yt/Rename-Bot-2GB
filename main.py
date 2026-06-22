@@ -1,3 +1,4 @@
+
 # ------------------------- #
 # Don't Remove Credit 
 # Ask Doubt @AU_Bot_Discussion 
@@ -601,7 +602,7 @@ async def metadata(_, msg):
 ➜ /setsubtitle
 ➜ /setvideo
 
-ᴇxᴀᴍᴘʟᴇ: /settitle My Video
+ᴇxᴀᴍᴘʟᴇ: /settitle Welcome To My Bot
 """
 
     buttons = InlineKeyboardMarkup([
@@ -698,32 +699,29 @@ async def see_metadata(_, msg):
     video = user.get("video", "Not Set")
 
     text = f"""
-📂 Sᴀᴠᴇᴅ Mᴇᴛᴀᴅᴀᴛᴀ
+⚙️ **Yᴏᴜʀ Mᴇᴛᴀᴅᴀᴛᴀ**
 
-━━━━━━━━━━━━━━━
-
-🎬 Tɪᴛʟᴇ:
-`{title}`
-
-👤 Aᴜᴛʜᴏʀ:
-`{author}`
-
-🎨 Aʀᴛɪsᴛ:
-`{artist}`
-
-🎵 Aᴜᴅɪᴏ:
-`{audio}`
-
-💬 Sᴜʙᴛɪᴛʟᴇ:
-`{subtitle}`
-
-📹 Vɪᴅᴇᴏ:
-`{video}`
-
-━━━━━━━━━━━━━━━
+◇ **Tɪᴛʟᴇ** ➜ `{title}`
+◇ **Aᴜᴛʜᴏʀ** ➜ `{author}`
+◇ **Aʀᴛɪsᴛ** ➜ `{artist}`
+◇ **Aᴜᴅɪᴏ** ➜ `{audio}`
+◇ **Sᴜʙᴛɪᴛʟᴇ** ➜ `{subtitle}`
+◇ **Vɪᴅᴇᴏ** ➜ `{video}`
 """
 
-    await msg.reply_text(text)
+    buttons = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(
+                "• Cʟᴏsᴇ •",
+                callback_data="close"
+            )
+        ]
+    ])
+
+    await msg.reply_text(
+        text,
+        reply_markup=buttons
+    )
 
 # ------------------------- #
 # Don't Remove Credit 
@@ -942,7 +940,6 @@ async def choose(_, msg):
 <b>𝗦𝗲𝗹𝗲𝗰𝘁 𝗧𝗵𝗲 𝗢𝘂𝘁𝗽𝘂𝘁 𝗙𝗶𝗹𝗲 𝗧𝘆𝗽𝗲</b>
 
 Pᴏᴡᴇʀᴇᴅ Bʏ : <a href="https://t.me/Anime_UpdatesAU">Aɴɪᴍᴇ Uᴘᴅᴀᴛᴇs AU</a>
-
 Oᴡɴᴇʀ: <a href="https://t.me/Mr_Mohammed_29">ᴍᴏʜᴀᴍᴍᴇᴅ</a>
 """
 
@@ -1028,6 +1025,7 @@ async def update_stats(file_size):
 # Owner @Mr_Mohammed_29
 # ------------------------- #
 
+# ----------- RENAMED COMMAND ---------- #
 @bot.on_message(filters.command("renamed"))
 async def renamed(_, msg):
 
@@ -1938,13 +1936,20 @@ async def cb(_, query: CallbackQuery):
                         {"_id": msg.from_user.id},
                         {
                             "$inc": {
-                                "renames": 1
+                                "renames": 1,
+                                "size": file_size
+                            },
+
+                            "$max": {
+                                "max_size": file_size
                             }
                         },
                         upsert=True
                     )
 
                     await update_leaderboard(user_id)
+
+                    await progress_msg.delete()
 
                     dump_id = dump_channels.get(user_id)
 
@@ -1985,10 +1990,15 @@ async def cb(_, query: CallbackQuery):
                         {"_id": msg.from_user.id},
                         {
                             "$inc": {
-                                "renames": 1
+                                "renames": 1,
+                                "size": file_size
+                            },
+
+                            "$max": {
+                                "max_size": file_size
                             }
-                         },
-                         upsert=True
+                        },
+                        upsert=True
                     )
 
                     await progress_msg.delete()
@@ -2214,7 +2224,7 @@ Tᴏ Dᴇᴠᴇʟᴏᴘᴇʀ
     buttons = InlineKeyboardMarkup([
         [
             InlineKeyboardButton(
-                "💬 Cᴏɴᴛᴀᴄᴛ Dᴇᴠᴇʟᴏᴘᴇʀ",
+                "• Dᴇᴠᴇʟᴏᴘᴇʀ •",
                 url="https://t.me/Mr_Mohammed_29"
             )
         ]
@@ -2226,22 +2236,21 @@ Tᴏ Dᴇᴠᴇʟᴏᴘᴇʀ
         disable_web_page_preview=True
     )
 
+# ------------------------- #
+# Don't Remove Credit 
+# Owner @Mr_Mohammed_29
+# ------------------------- #
 
-# ---------------- CHAT ID ---------------- #
+@bot.on_message(filters.command("alive"))
+async def alive(client, message):
 
-@bot.on_message(filters.private & filters.command("chatid"))
-async def chatid(_, msg):
-
-    text = f"""
-🆔 Cʜᴀᴛ Iɴғᴏ
-
-━━━━━━━━━━━━━━━
-➣ Usᴇʀ ID: `{msg.from_user.id}`
-➣ Cʜᴀᴛ ID: `{msg.chat.id}`
-━━━━━━━━━━━━━━━
-"""
-
-    await msg.reply_text(text)
+    await message.reply_photo(
+        photo="https://graph.org/file/af61bc94f516c210ecb37-7cdb22e66ea9539e3b.jpg",
+        caption=(
+            "Yᴏᴜ ᴀʀᴇ ᴠᴇʀʏ ʟᴜᴄᴋʏ 🤞 I ᴀᴍ ᴀʟɪᴠᴇ ❤️\n\n"
+            "Pʀᴇss /start ᴛᴏ ᴜsᴇ ᴍᴇ!"
+        )
+    )
 
 # ---------------- RUN ----------------
 keep_alive()
