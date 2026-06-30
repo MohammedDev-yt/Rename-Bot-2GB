@@ -20,7 +20,7 @@ client = AsyncIOMotorClient(MONGO_URI)
 db = client.rename_bot
 users = db.users
 leaderboard = db.leaderboard
-user_bots = db.user_bots
+user_bots = db.bots
 
 
 # ------------------------- #
