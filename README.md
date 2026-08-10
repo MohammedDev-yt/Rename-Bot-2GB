@@ -88,6 +88,9 @@
 | `BOT_USERNAME`  | Without @ [ex Jinwoo_Rename_bot]           |
 | `UPDATE_CHANNEL`| https://t.me/Anime_UpdatesAU.              |
 | `LOG_CHANNEL`   | Channel ID [ex -108176543210]              |
+| `WEATHER_API `  | Get From **https://openweathermap.org**     |
+| `GEMINI_API_KEY `  | Get From **https://aistudio.google.com**    |
+
 
 </details>
 
