@@ -55,6 +55,15 @@
 - 🎞️ Text to GIF Generator
 - 🎨 AI Image Generator
 - 📡 Auto reconnect system
+- ✨ AI-powered filename generation
+- 🌍 Translate text into different languages
+- 📝 Summarize long text quickly
+- ✍️ Correct grammar and improve text
+- 📢 Generate professional Telegram captions with AI
+- 🖼️ Extract text from images using OCR
+- 📄 Create PDF documents from supplied text
+- ⚡ Fast and easy-to-use commands
+- 🔐 Secure API-based processing
 - 🔄 Auto retry on failed uploads
 - 📌 Permanent thumbnail storage
 - 🛡️ FloodWait protection
@@ -115,6 +124,13 @@ weather - ᴄʜᴇᴄᴋ ᴡᴇᴀᴛʜᴇʀ
 datetime - sʜᴏᴡ ᴄᴜʀʀᴇɴᴛ ᴅᴀᴛᴇ & ᴛɪᴍᴇ
 text2gif - ᴄᴏɴᴠᴇʀᴛ ᴛᴇxᴛ ɪɴᴛᴏ GIF
 imagine - ɢᴇɴᴇʀᴀᴛᴇ AI ɪᴍᴀɢᴇ
+smartname - AI ғɪʟᴇɴᴀᴍᴇ ɢᴇɴᴇʀᴀᴛᴏʀ
+translate - Tʀᴀɴsʟᴀᴛᴇ ᴛᴇxᴛ
+summarize - Sᴜᴍᴍᴀʀɪᴢᴇ ᴛᴇxᴛ
+grammar - Cᴏʀʀᴇᴄᴛ ɢʀᴀᴍᴍᴀʀ
+captionai - Gᴇɴᴇʀᴀᴛᴇ ᴀ Tᴇʟᴇɢʀᴀᴍ ᴄᴀᴘᴛɪᴏɴ
+ocr - Exᴛʀᴀᴄᴛ ᴛᴇxᴛ ғʀᴏᴍ ᴀɴ ɪᴍᴀɢᴇ
+pdf - Cʀᴇᴀᴛᴇ ᴀ PDF ғʀᴏᴍ ᴛᴇxᴛ
 feedback - sᴇɴᴅ ғᴇᴇᴅʙᴀᴄᴋ ᴏʀ ʀᴇᴘᴏʀᴛ ᴀ ʙᴜɢ
 donate - ᴅᴏɴᴀᴛɪᴏɴ ɪɴғᴏʀᴍᴀᴛɪᴏɴ
 stats - ᴄʜᴇᴄᴋ ᴅᴇᴛᴀɪʟᴇᴅ ʙᴏᴛ sᴛᴀᴛɪsᴛɪᴄs
