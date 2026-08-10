@@ -4,6 +4,14 @@
 # Owner @Mr_Mohammed_29
 # ------------------------- #
 
+import os
+import re
+import asyncio
+from google import genai
+from google.genai import types
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from io import BytesIO
 from pyrogram import Client, filters, StopPropagation
 from pyrogram.enums import ParseMode
 from gtts import gTTS
@@ -11,7 +19,7 @@ from urllib.parse import quote
 from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery 
-from config import WEATHER_API, OWNER_ID 
+from config import WEATHER_API, GEMINI_API_KEY, OWNER_ID 
 
 # ------------------------- #
 # Don't Remove Credit 
@@ -966,6 +974,615 @@ def register_tools(bot):
 
         raise StopPropagation
 
+    # ==========================================
+    # AI + OCR + PDF TOOLS
+    # ==========================================
+
+    gemini_client = None
+
+    if GEMINI_API_KEY:
+        gemini_client = genai.Client(
+            api_key=GEMINI_API_KEY
+        )
+
+
+    AI_MODEL = "gemini-3.6-flash"
+ 
+    # ==========================================
+    # GEMINI HELPER
+    # ==========================================
+
+    async def gemini_text(prompt):
+
+        if not gemini_client:
+            raise Exception(
+                "GEMINI_API_KEY is not configured."
+            )
+
+        response = await gemini_client.aio.models.generate_content(
+            model=AI_MODEL,
+            contents=prompt
+        )
+
+        if not response.text:
+            raise Exception("AI returned an empty response.")
+
+        return response.text.strip()
+
+    # ==========================================
+    # /SMARTNAME
+    # ==========================================
+
+    @bot.on_message(filters.command("smartname") & filters.private)
+    async def smartname_cmd(client, message):
+
+        if len(message.command) < 2:
+            return await message.reply_text(
+                "🧠 <b>Sᴍᴀʀᴛ Nᴀᴍᴇ</b>\n\n"
+                "Usage:\n"
+                "<code>/smartname movie name</code>\n\n"
+                "Eample:\n"
+                "<code>/smartname Avengers Endgame 2019</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        text = message.text.split(None, 1)[1].strip()
+
+        wait = await message.reply_text(
+            "🧠 <b>Cʀᴇᴀᴛɪɴɢ Sᴍᴀʀᴛ Fɪʟᴇɴᴀᴍᴇ...</b>",
+            parse_mode=ParseMode.HTML
+        )
+
+        try:
+            prompt = f"""
+    Create a clean professional filename for this content:
+
+    {text}
+
+    Rules:
+    - Keep the original meaning.
+    - Remove unnecessary symbols.
+    - Use a professional filename style.
+    - Do not add an extension.
+    - Return only the filename.
+    """
+
+            result = await gemini_text(prompt)
+
+            result = result.replace("`", "").strip()
+
+            await wait.edit_text(
+                f"🧠 <b>Sᴍᴀʀᴛ Fɪʟᴇɴᴀᴍᴇ</b>\n\n"
+                f"<code>{result}</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        except Exception as e:
+
+            await wait.edit_text(
+                f"❌ <b>Eʀʀᴏʀ</b>\n\n"
+                f"<code>{str(e)[:1000]}</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+    # ==========================================
+    # /TRANSLATE
+    # ==========================================
+
+    @bot.on_message(filters.command("translate") & filters.private)
+    async def translate_cmd(client, message):
+
+        if len(message.command) < 3:
+            return await message.reply_text(
+                "🌍 <b>Tʀᴀɴsʟᴀᴛᴏʀ</b>\n\n"
+                "Usage:\n"
+                "<code>/translate language text</code>\n\n"
+                "Example:\n"
+                "<code>/translate Hindi Hello how are you?</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        args = message.text.split(None, 2)
+
+        language = args[1]
+        text = args[2]
+
+        wait = await message.reply_text(
+            "🌍 <b>Tʀᴀɴsʟᴀᴛɪɴɢ...</b>",
+            parse_mode=ParseMode.HTML
+        )
+
+        try:
+            prompt = f"""
+    Translate the following text into {language}.
+
+    - Keep the meaning accurate and natural.
+    - Return only the translated text.
+    -  Text:
+      {text}
+    """
+
+            result = await gemini_text(prompt)
+
+            await wait.edit_text(
+                f"🌍 <b>Tʀᴀɴsʟᴀᴛɪᴏɴ</b>\n\n"
+                f"{result}",
+                parse_mode=ParseMode.HTML
+            )
+
+        except Exception as e:
+
+            await wait.edit_text(
+                f"❌ <b>Eʀʀᴏʀ</b>\n\n"
+                f"<code>{str(e)[:1000]}</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+    # ==========================================
+    # /SUMMARIZE
+    # ==========================================
+
+    @bot.on_message(filters.command("summarize") & filters.private)
+    async def summarize_cmd(client, message):
+
+        if len(message.command) < 2:
+            return await message.reply_text(
+                "📝 <b>Sᴜᴍᴍᴀʀɪᴢᴇ</b>\n\n"
+                "Usage:\n"
+                "<code>/summarize your text</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        text = message.text.split(None, 1)[1].strip()
+
+        wait = await message.reply_text(
+            "📝 <b>Sᴜᴍᴍᴀʀɪᴢɪɴɢ...</b>",
+            parse_mode=ParseMode.HTML
+        ) 
+
+        try:
+            prompt = f"""
+    Summarize the following text.
+
+    Rules:
+    - Keep the important information.
+    - Remove unnecessary repetition.
+    - Use simple language.
+    - Use bullet points when useful.
+
+    Text:
+    {text}
+    """
+
+            result = await gemini_text(prompt)
+
+            await wait.delete()
+
+            for i in range(0, len(result), 4000):
+
+                await message.reply_text(
+                    result[i:i + 4000]
+                )
+
+        except Exception as e:
+ 
+            await wait.edit_text(
+                f"❌ <b>Eʀʀᴏʀ</b>\n\n"
+                f"<code>{str(e)[:1000]}</code>",
+                parse_mode=ParseMode.HTML
+            )
+  
+    # ==========================================
+    # /GRAMMAR
+    # ==========================================
+
+    @bot.on_message(filters.command("grammar") & filters.private)
+    async def grammar_cmd(client, message):
+
+        if len(message.command) < 2:
+            return await message.reply_text(
+                "✍️ <b>Gʀᴀᴍᴍᴀʀ Cʜᴇᴄᴋᴇʀ</b>\n\n"
+                "Usage:\n"
+                "<code>/grammar your sentence</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        text = message.text.split(None, 1)[1].strip()
+
+        wait = await message.reply_text(
+            "✍️ <b>Cʜᴇᴄᴋɪɴɢ Gʀᴀᴍᴍᴀʀ...</b>",
+            parse_mode=ParseMode.HTML
+        )
+
+        try:
+            prompt = f"""
+    Correct the grammar and spelling of this text.
+
+    Rules:
+    - Preserve the original meaning.
+    - Make the English natural.
+    - Return the corrected text first.
+    - Then briefly list important corrections.
+
+    Text:
+    {text}
+    """
+
+            result = await gemini_text(prompt)
+
+            await wait.delete()
+
+            for i in range(0, len(result), 4000):
+
+                await message.reply_text(
+                    result[i:i + 4000]
+                )
+
+        except Exception as e:
+
+            await wait.edit_text(
+                f"❌ <b>Eʀʀᴏʀ</b>\n\n"
+                f"<code>{str(e)[:1000]}</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+    # ==========================================
+    # /CAPTIONAI
+    # ==========================================
+
+    @bot.on_message(filters.command("captionai") & filters.private)
+    async def captionai_cmd(client, message):
+
+        if len(message.command) < 2:
+            return await message.reply_text(
+                "🎬 <b>Aɪ Cᴀᴘᴛɪᴏɴ Gᴇɴᴇʀᴀᴛᴏʀ</b>\n\n"
+                "Usage:\n"
+                "<code>/captionai movie name</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        text = message.text.split(None, 1)[1].strip()
+
+        wait = await message.reply_text(
+            "🎬 <b>Gᴇɴᴇʀᴀᴛɪɴɢ Cᴀᴘᴛɪᴏɴ...</b>",
+            parse_mode=ParseMode.HTML
+        )
+    
+        try:
+            prompt = f"""
+    Create a professional Telegram movie/file caption.
+
+    Content:
+    {text}
+
+    Include:
+    • Title
+    • Short description
+    • Genre if known
+    • Release year if known
+    • Quality if provided
+    • Audio/subtitle information if provided
+
+    Do not invent information that is not provided.
+    Use attractive but clean formatting.
+    """
+
+            result = await gemini_text(prompt)
+
+            await wait.delete()
+
+            for i in range(0, len(result), 4000):
+
+                await message.reply_text(
+                    result[i:i + 4000]
+                )
+   
+        except Exception as e:
+
+            await wait.edit_text(
+                f"❌ <b>Eʀʀᴏʀ</b>\n\n"
+                f"<code>{str(e)[:1000]}</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+
+    # ==========================================
+    # /OCR
+    # ==========================================
+
+    @bot.on_message(
+        filters.command("ocr") & filters.private
+    )
+    async def ocr_cmd(client, message):
+
+        if not message.reply_to_message:
+            return await message.reply_text(
+                "🖼️ <b>Oᴄʀ</b>\n\n"
+                "Reply to an image/photo with:\n"
+                "<code>/ocr</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        replied = message.reply_to_message
+
+        if not replied.photo and not replied.document:
+            return await message.reply_text(
+                "❌ Pʟᴇᴀsᴇ Rᴇᴘʟʏ Tᴏ Aɴ Iᴍᴀɢᴇ."
+            )
+
+        wait = await message.reply_text(
+            "🔎 <b>Exᴛʀᴀᴄᴛɪɴɢ Tᴇxᴛ...</b>",
+            parse_mode=ParseMode.HTML
+        )
+
+        file_path = None
+
+        try:
+
+            file_path = await replied.download()
+
+            with open(file_path, "rb") as f:
+                image_bytes = f.read()
+
+            mime_type = "image/jpeg"
+
+            if file_path.lower().endswith(".png"):
+                mime_type = "image/png"
+
+            elif file_path.lower().endswith(".webp"):
+                mime_type = "image/webp"
+
+            image_part = types.Part.from_bytes(
+                data=image_bytes,
+                mime_type=mime_type
+            )
+
+            response = await gemini_client.aio.models.generate_content(
+                model=AI_MODEL,
+                contents=[
+                    image_part,
+                    (
+                        "Extract all readable text from this image. "
+                        "Preserve the original wording as accurately "
+                        "as possible. Return only the extracted text."
+                    )
+                ]
+            )
+
+            result = response.text
+
+            if not result:
+                return await wait.edit_text(
+                    "❌ Nᴏ Rᴇᴀᴅᴀʙʟᴇ Tᴇxᴛ Fᴏᴜɴᴅ."
+                )
+
+            await wait.delete()
+
+            for i in range(0, len(result), 4000):
+
+                await message.reply_text(
+                    result[i:i + 4000]
+                )
+
+        except Exception as e:
+
+            await wait.edit_text(
+                f"❌ <b>Oᴄʀ Eʀʀᴏʀ</b>\n\n"
+                f"<code>{str(e)[:1000]}</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        finally:
+
+            if file_path and os.path.exists(file_path):
+
+                try:
+                    os.remove(file_path)
+                except Exception:
+                    pass
+
+    # ==========================================
+    # /PDF
+    # ==========================================
+
+    @bot.on_message(
+        filters.command("pdf") & filters.private
+    )
+    async def pdf_cmd(client, message):
+
+        if len(message.command) < 2:
+            return await message.reply_text(
+                "📄 <b>Pᴅғ Gᴇɴᴇʀᴀᴛᴏʀ</b>\n\n"
+                "Usage:\n"
+                "<code>/pdf Your text here</code>\n\n"
+                "Example:\n"
+                "<code>/pdf hii hello</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        text = message.text.split(None, 1)[1].strip()
+
+        wait = await message.reply_text(
+            "📄 <b>Cʀᴇᴀᴛɪɴɢ Pᴅғ...</b>\n"
+            "⏳ Pʟᴇᴀsᴇ ᴡᴀɪᴛ...",
+            parse_mode=ParseMode.HTML
+        )
+
+        pdf_file = f"pdf_{message.from_user.id}.pdf"
+
+        try:
+
+            def create_pdf():
+
+                from reportlab.lib.pagesizes import A4
+                from reportlab.pdfgen import canvas
+                from reportlab.pdfbase.pdfmetrics import stringWidth
+
+                page_width, page_height = A4
+
+                c = canvas.Canvas(
+                    pdf_file,
+                    pagesize=A4
+                )
+
+                c.setTitle("Generated PDF")
+
+                margin_left = 50
+                margin_right = 50
+                margin_top = 50
+                margin_bottom = 50
+
+                max_width = (
+                    page_width
+                    - margin_left
+                    - margin_right
+                )
+
+                font_name = "Helvetica"
+                font_size = 12
+                line_height = 18
+
+                c.setFont(
+                    font_name,
+                    font_size
+                )
+  
+                y = page_height - margin_top
+
+                # Handle multiple lines
+                paragraphs = text.splitlines()
+
+                if not paragraphs:
+                    paragraphs = [text]
+
+                for paragraph in paragraphs:
+
+                    words = paragraph.split()
+
+                    # Empty line
+                    if not words:
+                        y -= line_height
+
+                        if y < margin_bottom:
+                            c.showPage()
+                            c.setFont(
+                                font_name,
+                                font_size
+                            )
+                            y = page_height - margin_top
+
+                        continue
+
+                    line = ""
+
+                    for word in words:
+
+                       test_line = (
+                           f"{line} {word}"
+                       ).strip()
+
+                       if stringWidth(
+                           test_line,
+                           font_name,
+                           font_size
+                       ) <= max_width:
+
+                           line = test_line
+
+                       else:
+
+                           if line:
+
+                               c.drawString(
+                                   margin_left,
+                                   y,
+                                   line
+                               )
+
+                               y -= line_height
+
+                           line = word
+
+                           if y < margin_bottom:
+
+                               c.showPage()
+
+                               c.setFont(
+                                   font_name,
+                                   font_size
+                               )
+
+                               y = page_height - margin_top
+
+                    if line:
+
+                        c.drawString(
+                            margin_left,
+                            y,
+                            line
+                        )
+
+                        y -= line_height
+
+                    y -= 5
+
+                    if y < margin_bottom:
+
+                        c.showPage()
+
+                        c.setFont(
+                            font_name,
+                            font_size
+                        )
+
+                        y = page_height - margin_top
+
+                c.save()
+
+            await asyncio.to_thread(
+                create_pdf
+            )
+
+            # Make sure PDF actually exists
+            if not os.path.exists(pdf_file):
+                raise Exception(
+                    "PDF file was not created."
+                )
+
+            if os.path.getsize(pdf_file) == 0:
+                raise Exception(
+                    "Generated PDF is empty."
+                )
+
+            await wait.delete()
+
+            await message.reply_document(
+                document=pdf_file,
+                caption=(
+                    "📄 <b>Pᴅғ Cʀᴇᴀᴛᴇᴅ Sᴜᴄᴄᴇssғᴜʟʟʏ</b>\n\n"
+                    "📝 <b>Tᴇxᴛ:</b> "
+                    f"<code>{text[:1000]}</code>"
+                ),
+                parse_mode=ParseMode.HTML
+            )
+
+        except Exception as e:
+
+            await wait.edit_text(
+                f"❌ <b>Pᴅғ Eʀʀᴏʀ</b>\n\n"
+                f"<code>{str(e)[:1000]}</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        finally:
+
+            if os.path.exists(pdf_file):
+
+                try:
+                    os.remove(pdf_file)
+                except Exception:
+                    pass
+    
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
