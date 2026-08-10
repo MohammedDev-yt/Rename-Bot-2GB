@@ -19,6 +19,8 @@ class Config:
     # ---------------- TOOLS CONFIG ---------------- #
 
     WEATHER_API = os.getenv("WEATHER_API")
+
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
     
     # ---------------- DATABASE ---------------- #
     
@@ -47,6 +49,7 @@ MONGO_URI = Config.MONGO_URI
 LOG_CHANNEL = Config.LOG_CHANNEL
 UPDATE_CHANNEL = Config.UPDATE_CHANNEL
 WEATHER_API = Config.WEATHER_API
+GEMINI_API_KEY = Config.GEMINI_API_KEY
 
 # ------------------------- #
 # Don't Remove Credit
