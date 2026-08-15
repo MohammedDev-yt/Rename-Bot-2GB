@@ -147,7 +147,7 @@ def parse_duration(value: str):
 
 def get_home_text(user):
     return (
-        f"<blockquote expandable>"
+        f"<blockquote>"
         f"Hᴇʏ {user.mention} ♡\n\n"
         f"Wᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴍᴏꜱᴛ ᴀᴅᴠᴀɴᴄᴇᴅ Jɪɴᴡᴏᴏ Sᴜɴɢ Rᴇɴᴀᴍᴇ Bᴏᴛ!\n\n"
         f"» ᴡɪᴛʜ ᴍʏ ᴘᴏᴡᴇʀꜰᴜʟ ꜰᴇᴀᴛᴜʀᴇꜱ, ʏᴏᴜ ᴄᴀɴ:\n"
@@ -2049,7 +2049,7 @@ async def cb(_, query: CallbackQuery):
             log_event(f"User {user_id} uploaded file: {file.file_name}")
 
             progress_msg = await query.message.reply_text(
-                "<blockquote expandable>📥 <b>Dᴏᴡɴʟᴏᴀᴅɪɴɢ...</b></blockquote>",
+                "<blockquote>📥 <b>Dᴏᴡɴʟᴏᴀᴅɪɴɢ...</b></blockquote>",
                 parse_mode=ParseMode.HTML,
                 reply_markup=InlineKeyboardMarkup([
                     [InlineKeyboardButton("Cᴀɴᴄᴇʟ", callback_data=f"cancel_{user_id}")]
@@ -2082,7 +2082,7 @@ async def cb(_, query: CallbackQuery):
                 bar = "⬢" * filled + "⬡" * (10 - filled)
 
                 text = (
- f"<blockquote expandable>"
+ f"<blockquote>"
  f"📥 <b>Dᴏᴡɴʟᴏᴀᴅɪɴɢ...</b>\n\n"
  f"{bar}\n\n"
  f"📦 <b>Sɪᴢᴇ:</b> {humanbytes(current)} / {humanbytes(total)}\n"
@@ -2200,7 +2200,7 @@ async def cb(_, query: CallbackQuery):
             
         # -------- UPLOAD START -------- #
             await progress_msg.edit_text(
-                "<blockquote expandable>📤 <b>Uᴘʟᴏᴀᴅɪɴɢ sᴛᴀʀᴛᴇᴅ...</b></blockquote>",
+                "<blockquote>📤 <b>Uᴘʟᴏᴀᴅɪɴɢ sᴛᴀʀᴛᴇᴅ...</b></blockquote>",
                 parse_mode=ParseMode.HTML
             )
 
@@ -2236,7 +2236,7 @@ async def cb(_, query: CallbackQuery):
                 bar = "⬢" * filled + "⬡" * (10 - filled)
 
                 text = (
- f"<blockquote expandable>"
+ f"<blockquote>"
  f"📤 <b>Uᴘʟᴏᴀᴅɪɴɢ...</b>\n\n"
  f"{bar}\n\n"
  f"📦 <b>Sɪᴢᴇ:</b> {humanbytes(current)} / {humanbytes(total)}\n"
