@@ -69,13 +69,27 @@ def progress_bar(current, total):
 
 #---------- FULL PROGRESS ----------#
 
-def format_progress(current, total, speed, eta):
+def format_progress(
+    current,
+    total,
+    speed,
+    eta,
+    process="Downloading"
+):
+
+    icon = "📥" if process == "Downloading" else "📤"
 
     return (
+        f"<blockquote>"
+        f"{icon} <b>{process}...</b>\n\n"
         f"{progress_bar(current, total)}\n\n"
-        f"📦 {humanbytes(current)} / {humanbytes(total)}\n"
-        f"⚡ Speed: {humanbytes(speed)}/s\n"
-        f"⏳ ETA: {time_formatter(eta)}"
+        f"📦 <b>Size:</b> "
+        f"{humanbytes(current)} / {humanbytes(total)}\n"
+        f"⚡ <b>Speed:</b> "
+        f"{humanbytes(speed)}/s\n"
+        f"⏳ <b>ETA:</b> "
+        f"{time_formatter(eta)}"
+        f"</blockquote>"
     )
 
 #-------------------------#
