@@ -1525,5 +1525,3 @@ def register_tools(bot):
                     os.remove(pdf_file)
                 except Exception:
                     pass
-
-    
