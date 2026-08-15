@@ -2079,7 +2079,7 @@ async def cb(_, query: CallbackQuery):
                 bar = "⬢" * filled + "⬡" * (10 - filled)
 
                 text = (
- f"<blockquote>"
+ f"<blockquote expandable>"
  f"📥 <b>Dᴏᴡɴʟᴏᴀᴅɪɴɢ...</b>\n\n"
  f"{bar}\n\n"
  f"📦 <b>Sɪᴢᴇ:</b> {humanbytes(current)} / {humanbytes(total)}\n"
@@ -2133,8 +2133,6 @@ async def cb(_, query: CallbackQuery):
                 user.get("title"),
                 user.get("author"),
                 user.get("artist"),
-                user.get("audio"),
-                user.get("subtitle"),
                 user.get("video")
             ])
 
@@ -2145,13 +2143,12 @@ async def cb(_, query: CallbackQuery):
                     user.get("title", ""),
                     user.get("author", ""),
                     user.get("artist", ""),
-                    user.get("audio", ""),
-                    user.get("subtitle", ""),
                     user.get("video", "")
                 )
 
             else:
                 final = file_path
+ 
 
             if not os.path.exists(final) or os.path.getsize(final) < 100000:
                 final = file_path
@@ -2235,7 +2232,7 @@ async def cb(_, query: CallbackQuery):
                 bar = "⬢" * filled + "⬡" * (10 - filled)
 
                 text = (
- f"<blockquote>"
+ f"<blockquote expandable>"
  f"📤 <b>Uᴘʟᴏᴀᴅɪɴɢ...</b>\n\n"
  f"{bar}\n\n"
  f"📦 <b>Sɪᴢᴇ:</b> {humanbytes(current)} / {humanbytes(total)}\n"
