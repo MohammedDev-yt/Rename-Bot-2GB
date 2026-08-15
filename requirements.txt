@@ -1,27 +1,27 @@
 # ------------------------- #
-# Don't Remove Credit 
-# Ask Doubt @AU_Bot_Discussion 
-# Owner @Mr_Mohammed_29 
+# Don't Remove Credit
+# Ask Doubt @AU_Bot_Discussion
+# Owner @Mr_Mohammed_29
 # ------------------------- #
-
 
 pyrogram==2.0.106
-tgcrypto
-motor
-flask
-ffmpeg-python
-psutil
+TgCrypto==1.2.5
+motor==3.7.1
+dnspython==2.7.0
+flask==3.1.2
+ffmpeg-python==0.2.0
+psutil==7.0.0
 Pillow==10.4.0
-aiohttp
-gTTS
-qrcode
-imageio
-requests
-pytz
-google-genai
-reportlab
+aiohttp==3.12.15
+gTTS==2.5.4
+qrcode==8.2
+imageio==2.37.0
+requests==2.32.5
+pytz==2025.2
+google-genai==1.31.0
+reportlab==4.4.3
 
 # ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29 
+# Don't Remove Credit
+# Owner @Mr_Mohammed_29
 # ------------------------- #
