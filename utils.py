@@ -57,7 +57,7 @@ def time_formatter(seconds):
 def progress_bar(current, total):
 
     if total == 0:
-        return "<blockquote expandable>[⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡] 0%</blockquote>"
+        return "[⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡] 0%"
 
     percent = (current / total) * 100
 
@@ -65,7 +65,7 @@ def progress_bar(current, total):
 
     bar = "⬢" * filled + "⬡" * (10 - filled)
 
-    return f"<blockquote expandable>[{bar}] {round(percent, 2)}%</blockquote>"
+    return f"[{bar}] {round(percent, 2)}%"
 
 #---------- FULL PROGRESS ----------#
 
