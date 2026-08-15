@@ -43,8 +43,6 @@
 - 📈 User leaderboard system
 - 👤 Detailed user information
 - ❌ Task cancellation support
-- 📜 Bot activity logging
-- 🎊 Alive Bot Checker
 - 🛠️ Maintenance mode
 - 💬 Feedback system
 - 🕒 World date & time command
