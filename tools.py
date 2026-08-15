@@ -7,6 +7,7 @@
 import os
 import re
 import asyncio
+import json
 from google import genai
 from google.genai import types
 from reportlab.lib.pagesizes import A4
@@ -14,7 +15,6 @@ from reportlab.pdfgen import canvas
 from io import BytesIO
 from pyrogram import Client, filters, StopPropagation
 from pyrogram.enums import ParseMode
-from gtts import gTTS
 from urllib.parse import quote
 from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
@@ -28,7 +28,7 @@ from config import WEATHER_API, GEMINI_API_KEY, OWNER_ID
 
 MAINTENANCE = {
     "enabled": False,
-    "reason": "No reason provided"
+    "reason": "Bot Is Uploading and Fixing Errors and Bugs"
 }
 
 # ==============================
@@ -71,62 +71,6 @@ LAST_CACHE_CLEAR = "Never"
 # ------------------------- #
 
 def register_tools(bot):
-
-    # ---------------- TTS ----------------- #
-    @bot.on_message(filters.command("tts"))
-    async def tts(_, message):
-        if len(message.command) < 2:
-            return await message.reply_text(
-                "Usage:\n/tts ʏᴏᴜʀ ᴛᴇxᴛ"
-            )
-        text = message.text.split(None, 1)[1]
-        wait = await message.reply_text(
-            "🎙 <b>Gᴇɴᴇʀᴀᴛɪɴɢ Vᴏɪᴄᴇ...</b>\n"
-            "⏳ Pʟᴇᴀsᴇ ᴡᴀɪᴛ ᴀ sᴇᴄ...",
-            parse_mode=ParseMode.HTML
-        )
-        try:
-            file = f"tts_{message.from_user.id}.mp3"
-            tts = gTTS(
-                text=text,
-                lang="en",
-                slow=False
-            )
-            tts.save(file)
-            await wait.delete()
-            buttons = InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            "• ᴅᴇᴠᴇʟᴏᴘᴇʀ •",
-                            url="https://t.me/Mr_Mohammed_29"
-                        ),
-                        InlineKeyboardButton(
-                            "• ᴄʟᴏsᴇ •",
-                            callback_data="close"
-                        )
-                    ]
-                ]
-            )
-            await message.reply_audio(
-                audio=file,
-                title="Tᴇxᴛ Tᴏ Sᴘᴇᴇᴄʜ",
-                performer="ʙʏ @Aero_Unity",
-                caption=(
-                    f"🎙 <b>Tᴇxᴛ Tᴏ Sᴘᴇᴇᴄʜ</b>\n\n"
-                    f"<code>{text}</code>"
-                ),
-                parse_mode=ParseMode.HTML,
-                reply_markup=buttons
-            )
-            os.remove(file)
-        except Exception as e:
-            try:
-                await wait.edit_text(
-                    f"❌ Error:\n{e}"
-                )
-            except:
-                pass
 
     # ---------------- QR CODE ---------------- #
     @bot.on_message(filters.command("qrcode"))
@@ -1582,6 +1526,284 @@ def register_tools(bot):
                     os.remove(pdf_file)
                 except Exception:
                     pass
+
+    # ============================================================
+    # MEDIA INFO HELPERS
+    # ============================================================
+
+    async def ffprobe_info(file_path):
+
+        process = await asyncio.create_subprocess_exec(
+            "ffprobe",
+            "-v", "quiet",
+            "-print_format", "json",
+            "-show_streams",
+            "-show_format",
+            file_path,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )  
+
+        stdout, stderr = await process.communicate()
+  
+        if process.returncode != 0:
+            raise Exception(
+                stderr.decode(errors="ignore")[-3000:]
+            )
+
+        return json.loads(
+            stdout.decode(errors="ignore")
+        )
+
+
+    def get_replied_media(message):
+
+        replied = message.reply_to_message
+
+        if not replied:
+            return False
+
+        if replied.video:
+            return True
+
+        if replied.audio:
+            return True
+
+        if replied.document:
+            mime = replied.document.mime_type or ""
+ 
+            if (
+                mime.startswith("video/")
+                or mime.startswith("audio/")
+                or mime == "application/octet-stream"
+            ):
+                return True
+
+        return False
+
+    # ============================================================
+    # /AUDIOINFO
+    # ============================================================
+
+    @bot.on_message(
+        filters.command("audioinfo") & filters.private
+    )
+    async def audioinfo_cmd(client, message):
+
+        if not get_replied_media(message):
+            return await message.reply_text(
+                "🎵 <b>Aᴜᴅɪᴏ Iɴғᴏ</b>\n\n"
+                "Reply to a video/audio file with:\n"
+                "<code>/audioinfo</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        wait = await message.reply_text(
+            "🔍 <b>Rᴇᴀᴅɪɴɢ Aᴜᴅɪᴏ Iɴғᴏ...</b>",
+            parse_mode=ParseMode.HTML
+        )
+
+        file_path = None
+
+        try:
+
+            file_path = await message.reply_to_message.download()
+
+            info = await ffprobe_info(file_path)
+
+            streams = info.get("streams", [])
+
+            audios = [
+                stream
+                for stream in streams
+                if stream.get("codec_type") == "audio"
+            ]
+
+            if not audios:
+                return await wait.edit_text(
+                    "❌ <b>Nᴏ Aᴜᴅɪᴏ Tʀᴀᴄᴋ Fᴏᴜɴᴅ.</b>",
+                    parse_mode=ParseMode.HTML
+                )
+
+            text = "🎵 <b>Aᴜᴅɪᴏ Tʀᴀᴄᴋs</b>\n\n"
+
+            for number, stream in enumerate(
+                audios,
+                start=1
+            ):
+
+                tags = stream.get("tags", {})
+
+                language = tags.get(
+                    "language",
+                    "Unknown"
+                )
+
+                title = tags.get(
+                    "title",
+                    "Unknown"
+                )
+
+                codec = stream.get(
+                    "codec_name",
+                    "Unknown"
+                )
+
+                channels = stream.get(
+                    "channels",
+                    "Unknown"
+                )
+
+                bitrate = stream.get(
+                    "bit_rate",
+                    "Unknown"
+                )
+
+                if bitrate != "Unknown":
+
+                    try:
+                        bitrate = (
+                            int(bitrate) // 1000
+                        )
+                        bitrate = f"{bitrate} kbps"
+                    except:
+                        pass
+
+                text += (
+                    f"🎧 <b>Track {number}</b>\n"
+                    f"├ Language: "
+                    f"<code>{language}</code>\n"
+                    f"├ Name: "
+                    f"<code>{title}</code>\n"
+                    f"├ Codec: "
+                    f"<code>{codec}</code>\n"
+                    f"├ Channels: "
+                    f"<code>{channels}</code>\n"
+                    f"└ Bitrate: "
+                    f"<code>{bitrate}</code>\n\n"
+                )
+
+            await wait.edit_text(
+                text,
+                parse_mode=ParseMode.HTML
+            )
+
+        except Exception as e:
+
+            await wait.edit_text(
+                f"❌ <b>Eʀʀᴏʀ</b>\n\n"
+                f"<code>{str(e)[:2000]}</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        finally:
+
+            if file_path and os.path.exists(file_path):
+
+                try:
+                    os.remove(file_path)
+                except:
+                    pass
+
+    # ============================================================
+    # /SUBTITLEINFO
+    # ============================================================
+
+    @bot.on_message(
+        filters.command("subtitleinfo") & filters.private
+    )
+    async def subtitleinfo_cmd(client, message):
+
+        if not get_replied_media(message):
+            return await message.reply_text(
+                "💬 <b>Sᴜʙᴛɪᴛʟᴇ Iɴғᴏ</b>\n\n"
+                "Reply to a video/file with:\n"
+                "<code>/subtitleinfo</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        wait = await message.reply_text(
+            "🔍 <b>Rᴇᴀᴅɪɴɢ Sᴜʙᴛɪᴛʟᴇ Iɴғᴏ...</b>",
+            parse_mode=ParseMode.HTML
+        )
+
+        file_path = None
+
+        try:
+
+            file_path = await message.reply_to_message.download()
+
+            info = await ffprobe_info(file_path)
+
+            streams = info.get("streams", [])
+
+            subtitles = [
+                stream
+                for stream in streams
+                if stream.get("codec_type") == "subtitle"
+            ]
+
+            if not subtitles:
+                return await wait.edit_text(
+                    "❌ <b>Nᴏ Sᴜʙᴛɪᴛʟᴇ Tʀᴀᴄᴋ Fᴏᴜɴᴅ.</b>",
+                    parse_mode=ParseMode.HTML
+                )
+
+            text = "💬 <b>Sᴜʙᴛɪᴛʟᴇ Tʀᴀᴄᴋs</b>\n\n"
+
+            for number, stream in enumerate(
+                subtitles,
+                start=1
+            ):
+
+                tags = stream.get("tags", {})
+
+                language = tags.get(
+                    "language",
+                    "Unknown"
+                )
+
+                title = tags.get(
+                    "title",
+                    "Unknown"
+                )
+
+                codec = stream.get(
+                    "codec_name",
+                    "Unknown"
+                )
+
+                text += (
+                    f"💬 <b>Track {number}</b>\n"
+                    f"├ Language: "
+                    f"<code>{language}</code>\n"
+                    f"├ Name: "
+                    f"<code>{title}</code>\n"
+                    f"└ Codec: "
+                    f"<code>{codec}</code>\n\n"
+                )
+
+            await wait.edit_text(
+                text,
+                parse_mode=ParseMode.HTML
+            )
+
+        except Exception as e:
+
+            await wait.edit_text(
+                f"❌ <b>Eʀʀᴏʀ</b>\n\n"
+                f"<code>{str(e)[:2000]}</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        finally:
+
+            if file_path and os.path.exists(file_path):
+
+                try:
+                    os.remove(file_path)
+                except:
+                    pass  
     
 # ------------------------- #
 # Don't Remove Credit 
