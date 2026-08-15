@@ -80,7 +80,7 @@ def format_progress(
     icon = "📥" if process == "Downloading" else "📤"
 
     return (
-        f"<blockquote expandable>"
+        f"<blockquote>"
         f"{icon} <b>{process}...</b>\n\n"
         f"[{'⬢' * int((current / total) * 10) if total else '⬡' * 10}"
         f"{'⬡' * (10 - int((current / total) * 10)) if total else ''}] "
