@@ -57,7 +57,7 @@ def time_formatter(seconds):
 def progress_bar(current, total):
 
     if total == 0:
-        return "[⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡] 0%"
+        return "<blockquote expandable>[⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡] 0%</blockquote>"
 
     percent = (current / total) * 100
 
@@ -65,7 +65,7 @@ def progress_bar(current, total):
 
     bar = "⬢" * filled + "⬡" * (10 - filled)
 
-    return f"[{bar}] {round(percent, 2)}%"
+    return f"<blockquote expandable>[{bar}] {round(percent, 2)}%</blockquote>"
 
 #---------- FULL PROGRESS ----------#
 
@@ -80,14 +80,16 @@ def format_progress(
     icon = "📥" if process == "Downloading" else "📤"
 
     return (
-        f"<blockquote>"
+        f"<blockquote expandable>"
         f"{icon} <b>{process}...</b>\n\n"
-        f"{progress_bar(current, total)}\n\n"
-        f"📦 <b>Size:</b> "
+        f"[{'⬢' * int((current / total) * 10) if total else '⬡' * 10}"
+        f"{'⬡' * (10 - int((current / total) * 10)) if total else ''}] "
+        f"{round((current / total) * 100, 2) if total else 0}%\n\n"
+        f"📦 <b>Sɪᴢᴇ:</b> "
         f"{humanbytes(current)} / {humanbytes(total)}\n"
-        f"⚡ <b>Speed:</b> "
+        f"⚡ <b>Sᴘᴇᴇᴅ:</b> "
         f"{humanbytes(speed)}/s\n"
-        f"⏳ <b>ETA:</b> "
+        f"⏳ <b>Eᴛᴀ:</b> "
         f"{time_formatter(eta)}"
         f"</blockquote>"
     )
