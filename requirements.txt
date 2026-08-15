@@ -4,17 +4,17 @@
 # Owner @Mr_Mohammed_29 
 # ------------------------- #
 
-pyrogram
+
+pyrogram==2.0.106
 tgcrypto
 motor
 flask
 ffmpeg-python
-psutil 
+psutil
 Pillow==10.4.0
 aiohttp
 gTTS
 qrcode
-Pillow
 imageio
 requests
 pytz
