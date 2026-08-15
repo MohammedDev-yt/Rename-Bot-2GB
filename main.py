@@ -476,59 +476,9 @@ async def remove_fsub(client, message):
 # Owner @Mr_Mohammed_29
 # ------------------------- #
 
-# ---------------- FREE MODE ---------------- #
-
-@bot.on_message(filters.private & filters.command("freemode"))
-async def free_mode(client, message):
-
-    global FREE_MODE
-
-    if message.from_user.id not in ADMINS:
-        return
-
-    FREE_MODE = True
-
-    await message.reply_text(
-        "✅ Fʀᴇᴇ Mᴏᴅᴇ Eɴᴀʙʟᴇᴅ\n\n ○ Nᴏᴡ Usᴇʀs Cᴀɴ Usᴇ Tʜᴇ Bᴏᴛ ○"
-    )
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# --------------- DISABLE MODE --------------- #
-@bot.on_message(filters.private & filters.command("disablemode"))
-async def disable_mode(client, message):
-
-    global FREE_MODE
-
-    if message.from_user.id not in ADMINS:
-        return
-
-    FREE_MODE = False
-
-    await message.reply_text(
-        "🚫 Fʀᴇᴇ Mᴏᴅᴇ Dɪsᴀʙʟᴇᴅ\n\n ○ Nᴏᴡ Usᴇʀs Cᴀɴɴᴏᴛ Usᴇ Tʜᴇ Bᴏᴛ ○"
-    )
-    
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
 # ---------------- START ----------------
 @bot.on_message(filters.command("start"))
 async def start(client, message):
-
-    # ---------------- DISABLE MODE ---------------- #
-
-    if not FREE_MODE:
-
-        if message.from_user.id not in ADMINS:
-            return await message.reply_text(
-                "🚫 Fʀᴇᴇ Mᴏᴅᴇ Dɪsᴀʙʟᴇᴅ Bʏ Oᴡɴᴇʀ\n\n ● Nᴏᴡ Yᴏᴜ Cᴀɴɴᴏᴛ Usᴇ Tʜɪs Bᴏᴛ ●"
-            )
 
     # ---------------- FORCE SUB CHECK ---------------- #
 
@@ -1207,11 +1157,14 @@ async def del_thumb(_, msg):
 # ------------------------- #
 
 # ---------------- FILE / VIDEO CHOOSER ----------------
+
 @bot.on_message(filters.document | filters.video)
 async def choose(_, msg):
 
     if await is_banned(msg.from_user.id):
-        return await msg.reply("🚫 Yᴏᴜ Aʀᴇ Bᴀɴɴᴇᴅ.")
+        return await msg.reply(
+            "🚫 Yᴏᴜ Aʀᴇ Bᴀɴɴᴇᴅ."
+        )
 
     # -------- FILE SIZE CHECK -------- #
 
@@ -1228,10 +1181,27 @@ async def choose(_, msg):
 
     buttons = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("• ᴅᴏᴄᴜᴍᴇɴᴛ ᴍᴏᴅᴇ •", callback_data="file"),
-            InlineKeyboardButton("• ᴠɪᴅᴇᴏ ᴍᴏᴅᴇ •", callback_data="video")
+            InlineKeyboardButton(
+                "• ᴅᴏᴄᴜᴍᴇɴᴛ ᴍᴏᴅᴇ •",
+                callback_data="file"
+            ),
+            InlineKeyboardButton(
+                "• ᴠɪᴅᴇᴏ ᴍᴏᴅᴇ •",
+                callback_data="video"
+            )
         ]
     ])
+
+    # -------- GET USER SETTINGS -------- #
+
+    user = await get_user(msg.from_user.id) or {}
+
+    custom_caption = user.get(
+        "caption",
+        ""
+    ).strip()
+
+    # -------- ORIGINAL FILE NAME -------- #
 
     file_name = (
         msg.document.file_name
@@ -1239,25 +1209,27 @@ async def choose(_, msg):
         else msg.video.file_name
     )
 
+    # -------- DISPLAY NAME -------- #
+
+    display_name = (
+        custom_caption
+        if custom_caption
+        else file_name
+    )
+
+    # -------- CHOOSER MESSAGE -------- #
+
     text = f"""
-    <b>Fɪʟᴇ Nᴀᴍᴇ:</b> <code>{file_name}</code>
+<b>Fɪʟᴇ Nᴀᴍᴇ:</b> <code>{display_name}</code>
 
- <b>• 𝗦𝗲𝗹𝗲𝗰𝘁 𝗧𝗵𝗲 𝗢𝘂𝘁𝗽𝘂𝘁 𝗙𝗶𝗹𝗲 𝗧𝘆𝗽𝗲 •</b>
-    """
+<b>• 𝗦𝗲𝗹𝗲𝗰𝘁 𝗧𝗵𝗲 𝗢ᴜᴛᴘᴜᴛ Fɪʟᴇ Tʏᴘᴇ •</b>
+"""
 
-    if msg.document:
-        await msg.reply_text(
-            text,
-            reply_markup=buttons,
-            parse_mode=ParseMode.HTML
-        )
-
-    elif msg.video:
-        await msg.reply_text(
-            text,
-            reply_markup=buttons,
-            parse_mode=ParseMode.HTML
-        )
+    await msg.reply_text(
+        text,
+        reply_markup=buttons,
+        parse_mode=ParseMode.HTML
+    )
 
 # ------------------------- #
 # Don't Remove Credit 
@@ -1596,27 +1568,6 @@ async def unban(_, msg):
     log_event(f"User unbanned: {uid}")
 
     await msg.reply(f"✅ 𝗨𝘀𝗲𝗿 `{uid}` 𝗨𝗻𝗯𝗮𝗻𝗻𝗲𝗱 𝗦𝘂𝗰𝗰𝗲𝘀𝘀𝗳𝘂𝗹𝗹𝘆")
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ------------LOGS------------- #
-@bot.on_message(filters.command("logs"))
-async def logs(_, msg):
-
-    if msg.from_user.id != OWNER_ID:
-        return await msg.reply("❌ 𝗬𝗼𝘂 𝗮𝗿𝗲 𝗻𝗼𝘁 𝗮𝘂𝘁𝗵𝗼𝗿𝗶𝘇𝗲𝗱 𝘁𝗼 𝘂𝘀𝗲 𝘁𝗵𝗶𝘀 𝗰𝗼𝗺𝗺𝗮𝗻𝗱")
-
-    try:
-        with open("bot_logs.txt", "r", encoding="utf-8") as f:
-            data = f.read()[-3000:]  # last logs only
-
-        await msg.reply(f"📜 𝗕𝗢𝗧 𝗟𝗢𝗚𝗦:\n\n```{data}```")
-
-    except:
-        await msg.reply("𝗡𝗢 𝗟𝗢𝗚𝗦 𝗙𝗢𝗨𝗡𝗗 ❌")
 
 # ------------------------- #
 # Don't Remove Credit 
@@ -2127,15 +2078,15 @@ async def cb(_, query: CallbackQuery):
                 filled = int(percent / 10)
                 bar = "⬢" * filled + "⬡" * (10 - filled)
 
-                text = f"""
-{bar}
-📥 Dᴏᴡɴʟᴏᴀᴅɪɴɢ...
-
-» 𝗗𝗼𝗻𝗲 : {round(percent, 1)}%
-» 𝗦𝗶𝘇𝗲 : {humanbytes(current)} | {humanbytes(total)}
-» 𝗦𝗽𝗲𝗲𝗱 : {humanbytes(speed)}/s
-» 𝗘𝗧𝗔 : {time_formatter(eta)}
-"""
+                text = (
+ f"<blockquote>"
+ f"📥 <b>Dᴏᴡɴʟᴏᴀᴅɪɴɢ...</b>\n\n"
+ f"{bar}\n\n"
+ f"📦 <b>Sɪᴢᴇ:</b> {humanbytes(current)} / {humanbytes(total)}\n"
+ f"⚡ <b>Sᴘᴇᴇᴅ:</b> {humanbytes(speed)}/s\n"
+ f"⏳ <b>Eᴛᴀ:</b> {time_formatter(eta)}"
+ f"</blockquote>"
+                )
 
                 try:
                     await progress_msg.edit_text(
@@ -2283,15 +2234,15 @@ async def cb(_, query: CallbackQuery):
                 filled = int(percent / 10)
                 bar = "⬢" * filled + "⬡" * (10 - filled)
 
-                text = f"""
-{bar}
-📤 Uᴘʟᴏᴀᴅɪɴɢ...
-
-» 𝗗𝗼𝗻𝗲 : {round(percent, 1)}%
-» 𝗦𝗶𝘇𝗲 : {humanbytes(current)} | {humanbytes(total)}
-» 𝗦𝗽𝗲𝗲𝗱 : {humanbytes(speed)}/s
-» 𝗘𝗧𝗔 : {time_formatter(eta)}
-"""
+                text = (
+ f"<blockquote>"
+ f"📤 <b>Uᴘʟᴏᴀᴅɪɴɢ...</b>\n\n"
+ f"{bar}\n\n"
+ f"📦 <b>Sɪᴢᴇ:</b> {humanbytes(current)} / {humanbytes(total)}\n"
+ f"⚡ <b>Sᴘᴇᴇᴅ:</b> {humanbytes(speed)}/s\n"
+ f"⏳ <b>Eᴛᴀ:</b> {time_formatter(eta)}"
+ f"</blockquote>"
+                )
 
                 try:
                     await progress_msg.edit_text(
