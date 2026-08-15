@@ -43,36 +43,26 @@
 - 📈 User leaderboard system
 - 👤 Detailed user information
 - ❌ Task cancellation support
-- 💾 MongoDB database integration
-- ⚡ Fast and reliable processing
 - 📜 Bot activity logging
 - 🎊 Alive Bot Checker
 - 🛠️ Maintenance mode
 - 💬 Feedback system
 - 🕒 World date & time command
-- 🎙️ Text to Speech (TTS)
 - 📱 QR Code Generator
 - 🎞️ Text to GIF Generator
 - 🎨 AI Image Generator
-- 📡 Auto reconnect system
-- ✨ AI-powered filename generation
 - 🌍 Translate text into different languages
 - 📝 Summarize long text quickly
 - ✍️ Correct grammar and improve text
 - 📢 Generate professional Telegram captions with AI
 - 🖼️ Extract text from images using OCR
 - 📄 Create PDF documents from supplied text
-- ⚡ Fast and easy-to-use commands
-- 🔐 Secure API-based processing
-- 🔄 Auto retry on failed uploads
-- 📌 Permanent thumbnail storage
 - 🛡️ FloodWait protection
 - 🔐 Secure owner-only admin commands
 - 📡 Render 24/7 deployment ready
 - 🐍 Built with Python + Pyrogram
 - 🗄️ MongoDB powered storage
 - 📁 Supports files up to 2GB
-- 🚀 High-speed processing
 
 <details>
 
@@ -121,7 +111,6 @@ chkdump - ᴄʜᴇᴄᴋ ᴅᴜᴍᴘ ᴄʜᴀɴɴᴇʟ
 deldump - ᴅᴇʟᴇᴛᴇ ᴅᴜᴍᴘ ᴄʜᴀɴɴᴇʟ
 leaderboard - sʜᴏᴡ ᴛᴏᴘ ᴜsᴇʀs
 info - sʜᴏᴡ ᴜsᴇʀ ɪɴғᴏ
-tts - ᴄᴏɴᴠᴇʀᴛ ᴛᴇxᴛ ᴛᴏ sᴘᴇᴇᴄʜ
 qrcode - ɢᴇɴᴇʀᴀᴛᴇ QR ᴄᴏᴅᴇ
 weather - ᴄʜᴇᴄᴋ ᴡᴇᴀᴛʜᴇʀ
 datetime - sʜᴏᴡ ᴄᴜʀʀᴇɴᴛ ᴅᴀᴛᴇ & ᴛɪᴍᴇ
@@ -140,12 +129,9 @@ stats - ᴄʜᴇᴄᴋ ᴅᴇᴛᴀɪʟᴇᴅ ʙᴏᴛ sᴛᴀᴛɪsᴛɪᴄs
 addedbots - ᴠɪᴇᴡ ᴀᴅᴅᴇᴅ ʙᴏᴛs ʟɪsᴛ [Oᴡɴᴇʀ Oɴʟʏ]
 fsub - ᴀᴅᴅ ғᴏʀᴄᴇ sᴜʙsᴄʀɪʙᴇ ᴄʜᴀɴɴᴇʟ [Oᴡɴᴇʀ Oɴʟʏ]
 nofsub - ʀᴇᴍᴏᴠᴇ ғᴏʀᴄᴇ sᴜʙsᴄʀɪʙᴇ ᴄʜᴀɴɴᴇʟ [Oᴡɴᴇʀ Oɴʟʏ]
-freemode - ᴇɴᴀʙʟᴇ ғʀᴇᴇ ᴍᴏᴅᴇ [Oᴡɴᴇʀ Oɴʟʏ]
-disablemode - ᴅɪsᴀʙʟᴇ ʙᴏᴛ ᴍᴏᴅᴇ [Oᴡɴᴇʀ Oɴʟʏ]
 ban - ʙᴀɴ ᴜsᴇʀ [Oᴡɴᴇʀ Oɴʟʏ]
 unban - ᴜɴʙᴀɴ ᴜsᴇʀ [Oᴡɴᴇʀ Oɴʟʏ]
 status - ᴄʜᴇᴄᴋ ʙᴏᴛ sᴛᴀᴛᴜs [Oᴡɴᴇʀ Oɴʟʏ]
-logs - ᴠɪᴇᴡ ʙᴏᴛ ʟᴏɢs [Oᴡɴᴇʀ Oɴʟʏ]
 broadcast - sᴇɴᴅ ᴍᴇssᴀɢᴇ ᴛᴏ ᴀʟʟ ᴜsᴇʀs [Oᴡɴᴇʀ Oɴʟʏ]
 maintenance - ᴇɴᴀʙʟᴇ / ᴅɪsᴀʙʟᴇ ᴍᴀɪɴᴛᴇɴᴀɴᴄᴇ ᴍᴏᴅᴇ [Oᴡɴᴇʀ Oɴʟʏ]
 ```
