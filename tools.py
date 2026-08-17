@@ -1,2832 +1,1528 @@
 
 # ------------------------- #
-# Don't Remove Credit 
-# Ask Doubt @AU_Bot_Discussion 
-# Owner @Mr_Mohammed_29 
+# Don't Remove Credit
+# Owner @Mr_Mohammed_29
 # ------------------------- #
+
 import os
 import re
-import time
 import asyncio
-import ffmpeg
-import psutil
-import datetime
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-from PIL import Image
-from pyrogram import Client, filters, idle
+from google import genai
+from google.genai import types
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from io import BytesIO
+from pyrogram import Client, filters, StopPropagation
 from pyrogram.enums import ParseMode
-from pyrogram.enums import ChatMemberStatus
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from pyrogram.types import CallbackQuery
-from database import *
-from utils import progress_bar
-from ffmpeg_utils import add_metadata
-from keep_alive import keep_alive
+from urllib.parse import quote
+from datetime import datetime
+from PIL import Image, ImageDraw, ImageFont
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery 
+from config import WEATHER_API, GEMINI_API_KEY, OWNER_ID 
 
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
 
-def log_event(text: str):
-    with open("bot_logs.txt", "a", encoding="utf-8") as f:
-        f.write(f"[{datetime.datetime.now()}] {text}\n")
+MAINTENANCE = {
+    "enabled": False,
+    "reason": "Bot Is Uploading and Fixing Errors and Bugs"
+}
 
-if not os.path.exists("downloads"):
-    os.makedirs("downloads")
+# ==============================
+# ADMIN VARIABLES
+# ==============================
 
-if not os.path.exists("thumbs"):
-    os.makedirs("thumbs")
+BOT_START = datetime.now()
 
-START_TIME = time.time()
+CACHE = {}
 
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-def get_uptime():
-    seconds = int(time.time() - START_TIME)
-    m, s = divmod(seconds, 60)
-    h, m = divmod(m, 60)
-    return f"{h}h {m}m {s}s"
+FEEDBACK_IMAGE = "https://graph.org/file/ac5e24a6243bfbbbecca2-7210d817a7005a0f56.jpg"
+DB_IMAGE = "https://graph.org/file/faf795187aa693e1024a4-746b376c8dcc889d4f.jpg"
+CACHE_IMAGE = "https://graph.org/file/a49a09e10235fc020e604-289b1b02951a23f44b.jpg"
 
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
 
-def get_memory():
-    process = psutil.Process(os.getpid())
-    mem = process.memory_info().rss / (1024 * 1024)
-    return f"{mem:.2f} MB"
+import os
+import qrcode
+import requests
+import pytz
+import imageio
+import psutil
+import shutil
 
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
 
-async def get_ping():
-    start = time.time()
-    await asyncio.sleep(0)
-    end = time.time()
-    return f"{round((end - start) * 1000)} ms"
+WEATHER_CACHE = {}
+QR_CACHE = {}
+LAST_CACHE_CLEAR = "Never"
 
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
 
-# -------- MAX FILE LIMIT -------- #
-
-MAX_FILE_SIZE = 2097152000  # 2GB 
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-FORCE_SUB_CHANNELS = []
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-START_IMAGE = "https://graph.org/file/06077b7730c6e7c8edfe0-5d29472cf04266426a.jpg"
-
-
-download_last_edit = 0
-upload_last_edit = 0
-
-# -------- GLOBAL -------- #
-
-upload_modes = {}
-upload_bots = {}
-user_files = {}
-user_mode = {}
-active_tasks = {}
-personal_clients = {}
-dump_channels = {}
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-def parse_duration(value: str):
-    value = value.lower().strip()
-
-    if value.endswith("hr"):
-        return int(value[:-2]) * 3600
-
-    if value.endswith("h"):
-        return int(value[:-1]) * 3600
-
-    if value.endswith("d"):
-        return int(value[:-1]) * 86400
-
-    if value.endswith("w"):
-        return int(value[:-1]) * 604800
-
-    if value.endswith("m"):
-        return int(value[:-1]) * 2592000  # 30 days approx
-
-    if value.endswith("y"):
-        return int(value[:-1]) * 31536000
-
-    return None
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-def get_home_text(user):
-    return (
-        f"<blockquote>"
-        f"Hᴇʏ {user.mention} ♡\n\n"
-        f"Wᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴍᴏꜱᴛ ᴀᴅᴠᴀɴᴄᴇᴅ Jɪɴᴡᴏᴏ Sᴜɴɢ Rᴇɴᴀᴍᴇ Bᴏᴛ!\n\n"
-        f"» ᴡɪᴛʜ ᴍʏ ᴘᴏᴡᴇʀꜰᴜʟ ꜰᴇᴀᴛᴜʀᴇꜱ, ʏᴏᴜ ᴄᴀɴ:\n"
-        f"○ Aᴅᴅ ᴄᴜsᴛᴏᴍ ᴄᴀᴘᴛɪᴏɴ ᴀɴᴅ ᴛʜᴜᴍʙɴᴀɪʟ\n"
-        f"○ ᴀɴᴅ ᴀʟsᴏ ᴄᴀɴ sᴇᴛ ᴘʀᴇғɪx ᴀɴᴅ sᴜғғɪx ᴏɴ ʏᴏᴜʀ ғɪʟᴇs.⚡️\n\n"
-        f"๏ ᴄʟɪᴄᴋ ᴏɴ ᴛʜᴇ ʜᴏᴡ ᴛᴏ ᴜsᴇ ʙᴜᴛᴛᴏɴ ᴛᴏ ɢᴇᴛ ɪɴғᴏʀᴍᴀᴛɪᴏɴ ᴀʙᴏᴜᴛ ᴍʏ ᴄᴏᴍᴍᴀɴᴅs..\n\n"
-        f"›› ᴛʜɪs ʙᴏᴛ ɪs ᴅᴇᴘʟᴏʏᴇᴅ ʙʏ: "
-        f"<a href='https://t.me/Mr_Mohammed_29'>ᴍᴏʜᴀᴍᴍᴇᴅ</a>"
-        f"</blockquote>"
-    )
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-def get_home_buttons():
-    update_url = UPDATE_CHANNEL
-
-    if not update_url or not isinstance(update_url, str) or not update_url.startswith("http"):
-        update_url = "https://t.me/Aero_Unity"
-
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("• ᴍʏ ᴀʟʟ ᴄᴏᴍᴍᴀɴᴅs •", callback_data='help')],
-        [
-            InlineKeyboardButton('• ᴜᴘᴅᴀᴛᴇs •', url=update_url),
-            InlineKeyboardButton('• Bʟᴇᴀᴄʜ •', url="https://t.me/AU_Bleach")
-        ],
-        [
-            InlineKeyboardButton('• ᴀʙᴏᴜᴛ •', callback_data='about'),
-            InlineKeyboardButton('• sᴏᴜʀᴄᴇ •', callback_data='source')
-        ]
-    ])
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-from config import (
-    API_ID,
-    API_HASH,
-    BOT_TOKEN,
-    OWNER_ID,
-    MONGO_URI,
-    LOG_CHANNEL,
-    UPDATE_CHANNEL
-)
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-ADMINS = [OWNER_ID]
-
-print("LOG_CHANNEL:", LOG_CHANNEL)
-print("UPDATE_CHANNEL:", UPDATE_CHANNEL)
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-def humanbytes(size):
-    if not size:
-        return "0 B"
-
-    power = 1024
-    n = 0
-    Dic_powerN = {0: 'B', 1: 'KB', 2: 'MB', 3: 'GB', 4: 'TB'}
-
-    while size >= power and n < len(Dic_powerN) - 1:
-        size /= power
-        n += 1
-
-    return str(round(size, 2)) + " " + Dic_powerN[n]
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-def time_formatter(seconds):
-    m, s = divmod(int(seconds), 60)
-    h, m = divmod(m, 60)
-    return f"{h}h {m}m {s}s"
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-def safe_name(name):
-    return re.sub(r'[\\\\/:*?"<>|]', '_', name)
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-async def get_thumbnail(bot, user_thumb, is_video, file_path, user_id):
-
-    if user_thumb:
-        path = await bot.download_media(
-            user_thumb,
-            file_name=f"thumb_{user_id}.jpg"
-        )
-        return path
-
-    if is_video:
-        thumb_path = f"thumb_{user_id}.jpg"
-
-        try:
-            (
-                ffmpeg
-                .input(file_path, ss=1)
-                .output(
-                    thumb_path,
-                    vframes=1,
-                    qscale=2,      # High quality thumbnail
-                    format="image2"
-                )
-                .run(overwrite_output=True, quiet=True)
-            )
-
-            return thumb_path
-
-        except Exception as e:
-            print(e)
-            return None
-
-    return None
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-def calc_progress(current, total, start_time, last_current=0, last_time=0):
-    now = time.time()
-
-    diff = max(now - start_time, 0.1)
-
-    # percentage
-    percent = (current / total) * 100 if total else 0
-
-    # smoother speed (difference based)
-    speed = (current - last_current) / (now - last_time) if last_time else current / diff
-    speed = max(speed, 0)
-
-    # ETA safer calculation
-    remaining = total - current
-    eta = remaining / speed if speed > 0 else 0
-
-    return percent, speed, eta
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-def smart_thumb(path):
-    try:
-        size = os.path.getsize(path)
-
-        # If already small → use directly
-        if size <= 200 * 1024:
-            return path
-
-        # Else compress
-        img = Image.open(path).convert("RGB")
-        img.thumbnail((320, 320))
-        img.save(path, "JPEG", quality=100, optimize=True)
-
-        return path
-    except:
-        return None
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-def generate_video_thumb(video_path, output):
-    try:
-        (
-            ffmpeg
-            .input(video_path, ss=1)
-            .output(output, vframes=1)
-            .run(overwrite_output=True)
-        )
-        return output
-    except:
-        return None
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-def get_video_metadata(path):
-    try:
-        probe = ffmpeg.probe(path)
-        video_stream = next(
-            (s for s in probe["streams"] if s["codec_type"] == "video"),
-            None
-        )
-
-        duration = int(float(probe["format"]["duration"])) if "duration" in probe["format"] else 0
-        width = int(video_stream["width"]) if video_stream else 0
-        height = int(video_stream["height"]) if video_stream else 0
-
-        return duration, width, height
-    except Exception as e:
-        print("Metadata Error:", e)
-        return 0, 0, 0
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-bot = Client(
-    "rename-bot",
-    api_id=API_ID,
-    api_hash=API_HASH,
-    bot_token=BOT_TOKEN,
-    workers=43,
-    sleep_threshold=16,
-    max_concurrent_transmissions=7
-)
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-from tools import register_tools
-
-register_tools(bot)
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ---------------- CHECK FORCE SUB ---------------- #
-
-async def check_force_sub(client, user_id):
-
-    global FORCE_SUB_CHANNELS
-
-    # No force-sub channels
-    if not FORCE_SUB_CHANNELS:
-        return True
-
-    for channel in FORCE_SUB_CHANNELS:
-
-        try:
-            member = await client.get_chat_member(
-                channel,
-                user_id
-            )
-
-            if member.status not in [
-                ChatMemberStatus.MEMBER,
-                ChatMemberStatus.ADMINISTRATOR,
-                ChatMemberStatus.OWNER
-            ]:
-                return False
-
-        except Exception as e:
-            print(f"FORCE SUB ERROR [{channel}]:", e)
-            return False
-
-    # User joined ALL channels
-    return True
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ---------------- LOAD FORCE SUB ---------------- #
-
-async def load_force_sub():
-
-    global FORCE_SUB_CHANNELS
-
-    data = await db.settings.find_one(
-        {"_id": "force_sub"}
-    )
-
-    if data:
-
-        channels = data.get("channels", [])
-
-        if isinstance(channels, str):
-            channels = [channels]
-
-        FORCE_SUB_CHANNELS = channels
-
-        print(
-            f"✅ FORCE SUB LOADED: {FORCE_SUB_CHANNELS}"
-        )
-
-    else:
-
-        FORCE_SUB_CHANNELS = []
-
-        print("ℹ️ FORCE SUB NOT ENABLED")
-
-# ---------------- ADD FORCE SUB CHANNEL ---------------- #
-
-@bot.on_message(filters.private & filters.command("fsub"))
-async def add_fsub(client, message):
-
-    global FORCE_SUB_CHANNELS
-
-    if message.from_user.id not in ADMINS:
-        return
-
-    if len(message.command) < 2:
-        return await message.reply_text(
-            "❌ Usage:\n\n"
-            "/fsub @ChannelUsername"
-        )
-
-    channel = message.command[1].strip()
-
-    if not channel.startswith("@"):
-        channel = "@" + channel
-
-    # Check channel exists
-    try:
-        await client.get_chat(channel)
-
-    except Exception as e:
-
-        return await message.reply_text(
-            f"❌ Cʜᴀɴɴᴇʟ Nᴏᴛ Fᴏᴜɴᴅ.\n\n"
-            f"{e}"
-        )
-
-    # Don't add duplicate
-    if channel in FORCE_SUB_CHANNELS:
-
-        return await message.reply_text(
-            f"⚠️ This channel is already in Force Sub:\n\n"
-            f"📢 {channel}"
-        )
-
-    # Add channel
-    FORCE_SUB_CHANNELS.append(channel)
-
-    # Save permanently in MongoDB
-    await db.settings.update_one(
-        {"_id": "force_sub"},
-        {
-            "$set": {
-                "channels": FORCE_SUB_CHANNELS
-            }
-        },
-        upsert=True
-    )
-
-    await message.reply_text(
-        f"✅ Fᴏʀᴄᴇ Sᴜʙ Cʜᴀɴɴᴇʟ Aᴅᴅᴇᴅ\n\n"
-        f"📢 Cʜᴀɴɴᴇʟ: {channel}\n\n"
-        f"📊 Tᴏᴛᴀʟ Cʜᴀɴɴᴇʟs: "
-        f"{len(FORCE_SUB_CHANNELS)}"
-    )
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ---------------- REMOVE ALL FORCE SUB ---------------- #
-
-@bot.on_message(filters.private & filters.command("nofsub"))
-async def remove_fsub(client, message):
-
-    global FORCE_SUB_CHANNELS
-
-    if message.from_user.id not in ADMINS:
-        return
-
-    await db.settings.delete_one(
-        {"_id": "force_sub"}
-    )
-
-    FORCE_SUB_CHANNELS = []
-
-    await message.reply_text(
-        "✅ Aʟʟ Fᴏʀᴄᴇ Sᴜʙ Cʜᴀɴɴᴇʟs Rᴇᴍᴏᴠᴇᴅ."
-    )
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ---------------- LIST FORCE SUB CHANNELS ---------------- #
-
-@bot.on_message(filters.private & filters.command("fsubs"))
-async def list_fsub(client, message):
-
-    if message.from_user.id not in ADMINS:
-        return
-
-    if not FORCE_SUB_CHANNELS:
-
-        return await message.reply_text(
-            "ℹ️ Nᴏ Fᴏʀᴄᴇ Sᴜʙ Cʜᴀɴɴᴇʟs Aᴅᴅᴇᴅ."
-        )
-
-    text = "📢 <b>Fᴏʀᴄᴇ Sᴜʙ Cʜᴀɴɴᴇʟs</b>\n\n"
-
-    for i, channel in enumerate(
-        FORCE_SUB_CHANNELS,
-        start=1
-    ):
-        text += f"{i}. {channel}\n"
-
-    text += (
-        f"\n📊 <b>Tᴏᴛᴀʟ:</b> "
-        f"{len(FORCE_SUB_CHANNELS)}"
-    )
-
-    await message.reply_text(
-        text,
-        parse_mode=ParseMode.HTML
-    )
-
-# ---------------- START ----------------
-@bot.on_message(filters.command("start"))
-async def start(client, message):
-
-    global FORCE_SUB_CHANNELS
-
-    FORCE_SUB_CHANNELS = await get_force_sub_channels()
-
-    # ---------------- FORCE SUB CHECK ---------------- #
-
-    if message.from_user.id not in ADMINS:
-
-        joined = await check_force_sub(client, message.from_user.id)
-
-        if joined is False:
-
-            buttons = []
-
-            for channel in FORCE_SUB_CHANNELS:
-
-                username = channel.replace("@", "")
-
-                buttons.append([
-                    InlineKeyboardButton(
-                        f"● Jᴏɪɴ {channel} ●",
-                        url=f"https://t.me/{username}"
-                    )
-                ])
-
-
+def register_tools(bot):
+
+    # ---------------- QR CODE ---------------- #
+    @bot.on_message(filters.command("qrcode"))
+    async def qrcode_cmd(_, message):
+        if len(message.command) < 2:
             return await message.reply_text(
-                "›› ‼️ ʟᴏᴏᴋs ʟɪᴋᴇ ʏᴏᴜ ʜᴀᴠᴇɴ'ᴛ ᴊᴏɪɴᴇᴅ ᴛᴏ ᴀʟʟ ᴏᴜʀ ᴄʜᴀɴɴᴇʟs ʏᴇᴛ.\n\n"
-                "📢 Pʟᴇᴀsᴇ Jᴏɪɴ Aʟʟ Cʜᴀɴɴᴇʟs Tᴏ Cᴏɴᴛɪɴᴜᴇ.",
-                reply_markup=InlineKeyboardMarkup(buttons)
+                "Usage:\n/qrcode ʏᴏᴜʀ ᴛᴇxᴛ ᴏʀ ʟɪɴᴋ"
+            )
+        text = message.text.split(None, 1)[1]
+        QR_CACHE[message.from_user.id] = text
+        wait = await message.reply_text(
+            "📱 <b>Gᴇɴᴇʀᴀᴛɪɴɢ Qʀ Cᴏᴅᴇ...</b>\n"
+            "⏳ Pʟᴇᴀsᴇ ᴡᴀɪᴛ ᴀ sᴇᴄ...",
+            parse_mode=ParseMode.HTML
+        )
+        try:
+            qr = qrcode.QRCode(
+               version=1,
+               error_correction=qrcode.constants.ERROR_CORRECT_H,
+               box_size=10,
+               border=4
+            )
+            qr.add_data(text)
+            qr.make(fit=True)
+
+            img = qr.make_image(
+                fill_color="black",
+                back_color="white"
+            )
+            file = f"qrcode_{message.from_user.id}.png"
+            img.save(file)
+
+            await wait.delete()
+            buttons = InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "• ɴᴇᴡ ǫʀ ᴄᴏᴅᴇ •",
+                            callback_data="new_qr"
+                        ),
+                        InlineKeyboardButton(
+                            "• ᴄʟᴏsᴇ •",
+                            callback_data="close"
+                        )
+                    ]
+                ]
+            )
+            await message.reply_photo(
+                photo=file,
+                caption=(
+                    "📱 <b>Qʀ Cᴏᴅᴇ Gᴇɴᴇʀᴀᴛᴇᴅ Sᴜᴄᴄᴇssғᴜʟʟʏ</b>\n"
+                    " ʙʏ @Aero_Unity\n\n"
+                    f"<code>{text}</code>"
+                ),
+                parse_mode=ParseMode.HTML,
+                reply_markup=buttons
             )
 
-    try:
-        if await is_banned(message.from_user.id):
-            return await message.reply("🚫 Yᴏᴜ Aʀᴇ Bᴀɴɴᴇᴅ.")
+            os.remove(file)
 
-        await add_user(message.from_user.id)
+        except Exception as e:
 
-        log_event(f"User started bot: {message.from_user.id}")
-
-        user = message.from_user
-
-        if not user:
-            return
-
-        me = await client.get_me()
-
-        user_mention = f"[{user.first_name}](tg://user?id={user.id})"
-        bot_mention = f"@{me.username}" if me.username else "Bot"
-
-        try:
-            await client.send_message(
-                LOG_CHANNEL,
-                f"**--Nᴇᴡ Uꜱᴇʀ Sᴛᴀʀᴛᴇᴅ Tʜᴇ Bᴏᴛ--**\n\n"
-                f"Uꜱᴇʀ: {user_mention}\n"
-                f"Iᴅ: `{user.id}`\n"
-                f"Uɴ: @{user.username if user.username else 'N/A'}\n\n"
-                f"Dᴀᴛᴇ: {datetime.datetime.now().strftime('%d-%m-%Y')}\n"
-                f"Tɪᴍᴇ: {datetime.datetime.now().strftime('%H:%M:%S')}\n\n"
-                f"By: {bot_mention}"
+            await wait.edit_text(
+                f"❌ Error:\n{e}"
             )
 
-        except Exception as e:
-            print("Log Error:", e)
-        # ---------------- ANIMATION ----------------
-        try:
-            m = await message.reply_text("Sʜᴀᴅᴏᴡ Oғ Mᴏɴᴀʀᴄʜ. . .")
-            await asyncio.sleep(0.5)
-            await m.edit_text("🎊")
-            await asyncio.sleep(0.5)
-            await m.edit_text("⚡")
-            await asyncio.sleep(0.5)
-            await m.edit_text("Jɪɴᴡᴏᴏ Sᴜɴɢ...")
-            await asyncio.sleep(0.5)
-            await m.delete()
-        except Exception as e:
-            print("ANIMATION ERROR:", e)
+    # ---------------- NEW QR ---------------- #
+    @bot.on_callback_query(filters.regex("^new_qr$"))
+    async def new_qr(_, query):
 
-        # ---------------- MAIN MESSAGE ----------------
-        try:
-            start_msg = await message.reply_photo(
-                photo=START_IMAGE,
-                caption=get_home_text(user),
-                reply_markup=get_home_buttons(),
-                parse_mode=ParseMode.HTML
+        user_id = query.from_user.id
+
+        text = QR_CACHE.get(user_id)
+
+        if not text:
+            return await query.answer(
+                "Nᴏ ᴘʀᴇᴄɪᴏᴜs ǫʀ ᴄᴏᴅᴇ ғᴏᴜɴᴅ.",
+                show_alert=True
             )
-        except Exception as e:
-            print("HOME UI ERROR:", e)
+        await query.answer()
+
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_H,
+            box_size=10,
+            border=4
+        )
+
+        qr.add_data(text)
+        qr.make(fit=True)
+
+        img = qr.make_image(
+            fill_color="black",
+            back_color="white"
+        )
+        file = f"qrcode_{user_id}.png"
+        img.save(file)
+
+        await query.message.reply_photo(
+            photo=file,
+            caption=(
+                "📱 <b>Qʀ Cᴏᴅᴇ Gᴇɴᴇʀᴀᴛᴇᴅ Sᴜᴄᴄᴇssғᴜʟʟʏ</b>\n"
+                " ʙʏ @Aero_Unity\n\n"
+                f"<code>{text}</code>"
+            ),
+            parse_mode=ParseMode.HTML,
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "• ɴᴇᴡ ǫʀ ᴄᴏᴅᴇ •",
+                            callback_data="new_qr"
+                        ),
+                        InlineKeyboardButton(
+                            "• ᴄʟᴏsᴇ •",
+                            callback_data="close"
+                        )
+                    ]
+                ]
+            )
+        )
+        os.remove(file)
+
+    # ---------------- DATETIME ---------------- #
+    @bot.on_message(filters.command("datetime"))
+    async def datetime_cmd(_, message):
+
+        wait = await message.reply_text(
+            "🕒 <b>Gᴇᴛᴛɪɴɢ Cᴜʀʀᴇɴᴛ Dᴀᴛᴇ & Tɪᴍᴇ...</b>\n"
+            "⏳ Pʟᴇᴀsᴇ ᴡᴀɪᴛ ᴀ sᴇᴄ..",
+            parse_mode=ParseMode.HTML
+        )
+        try:
+            zones = {
+                "🇬🇧 UTC": "UTC",
+                "🇮🇳 IST": "Asia/Kolkata",
+                "🇦🇪 GST": "Asia/Dubai",
+                "🇸🇬 SGT": "Asia/Singapore",
+                "🇯🇵 JST": "Asia/Tokyo",
+                "🇺🇸 EST": "America/New_York",
+                "🇺🇸 PST": "America/Los_Angeles",
+                "🇪🇺 CET": "Europe/Paris",
+                "🇷🇺 MSK": "Europe/Moscow",
+                "🇦🇺 AEST": "Australia/Sydney"
+            }
+            text = "🕐 <b>Cᴜʀʀᴇɴᴛ Dᴀᴛᴇ & Tɪᴍᴇ</b>\n\n"
+            for name, zone in zones.items():
+
+                tz = pytz.timezone(zone)
+                now = datetime.now(tz)
+
+                offset = now.strftime("%z")
+
+                if offset:
+                    hrs = int(offset[:3])
+                    mins = int(offset[3:]) // 60
+
+                    if mins == 0:
+                        utc = f"UTC{hrs:+d}"
+                    else:
+                        utc = f"UTC{hrs:+d}.{mins}"
+                else:
+                    utc = "UTC"
+
+                text += (
+                    f"» {name}: "
+                    f"<code>{now.strftime('%d/%m/%Y %H:%M')}</code> "
+                    f"{utc}\n"
+                )
+
+            buttons = InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "• ʀᴇғʀᴇsʜ •",
+                            callback_data="refresh_datetime"
+                        ),
+                        InlineKeyboardButton(
+                            "• ᴄʟᴏsᴇ •",
+                            callback_data="close"
+                        )
+                    ]
+                ]
+            )
+
+            await wait.delete()
 
             await message.reply_text(
-                get_home_text(user),
-                reply_markup=get_home_buttons(),
-                parse_mode=ParseMode.HTML
-            )
-    except Exception as e:
-        print("START ERROR:", e)
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ---------------- PRIVACY ---------------- #
-
-@bot.on_message(filters.command("privacy"))
-async def privacy(client, message):
-
-    buttons = InlineKeyboardMarkup([
-    [
-        InlineKeyboardButton(
-            "• ᴅᴇᴠᴇʟᴏᴘᴇʀ •",
-            url="https://t.me/Mr_Mohammed_29"
-        ),
-        InlineKeyboardButton(
-            "• ᴄʟᴏsᴇ •",
-            callback_data="close"
-        )
-    ]
- ])
-    await message.reply_photo(
-        photo="https://graph.org/file/ffdbc01d09855874311b1-5f3f1eae52d984db3d.jpg",
-        caption="""
-ʜᴇʀᴇ ɪs ᴛʜᴇ ᴘʀɪᴠᴀᴄʏ & ᴘᴏʟɪᴄʏ ᴏғ ᴛʜᴇ ʙᴏᴛ:
-
-➲ ᴡᴇ ᴏɴʟʏ ꜱᴛᴏʀᴇ ᴜꜱᴇʀ ɪᴅꜱ ᴀɴᴅ ɴᴏᴛʜɪɴɢ ᴇʟꜱᴇ.
-
-➲ ʏᴏᴜʀ ғɪʟᴇꜱ ᴀʀᴇ ᴜꜱᴇᴅ ᴏɴʟʏ ғᴏʀ ᴛʜᴇ ʙᴏᴛ ꜰᴜɴᴄᴛɪᴏɴꜱ.
-
-➲ ᴡᴇ ᴅᴏ ɴᴏᴛ ꜱʜᴀʀᴇ ʏᴏᴜʀ ᴅᴀᴛᴀ ᴡɪᴛʜ ᴀɴʏᴏɴᴇ.
-
-ʏᴏᴜʀ ᴘʀɪᴠᴀᴄʏ ɪꜱ ᴏᴜʀ ᴘʀɪᴏʀɪᴛʏ ❤️
-""",
-        reply_markup=buttons
-    )
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ---------------- CAPTION ----------------
-
-@bot.on_message(filters.command("set_caption"))
-async def set_caption(_, msg):
-
-    if await is_banned(msg.from_user.id):
-        return await msg.reply("🚫 Yᴏᴜ Aʀᴇ Bᴀɴɴᴇᴅ.")
-
-    if len(msg.command) < 2:
-        return await msg.reply(
-            "Gɪᴠᴇ Tʜᴇ Cᴀᴘᴛɪᴏɴ\n\nExᴀᴍᴘʟᴇ:- /set_caption Welcome To Jinwoo Rename Bot @Aero_Unity"
-        )
-
-    cap = msg.text.split(None, 1)[1]
-    await set_user(msg.from_user.id, {"caption": cap})
-    await msg.reply("Cᴀᴘᴛɪᴏɴ Sᴀᴠᴇᴅ ✅️")
-
-@bot.on_message(filters.command("see_caption"))
-async def see_caption(_, msg):
-
-    user = await get_user(msg.from_user.id) or {}
-
-    caption = user.get("caption")
-
-    if not caption:
-        caption = "Nᴏ Cᴀᴘᴛɪᴏɴ Is Tʜᴇʀᴇ, Aᴅᴅ Nᴏᴡ"
-
-    await msg.reply(caption)
-
-@bot.on_message(filters.command("del_caption"))
-async def del_caption(_, msg):
-    await set_user(msg.from_user.id, {"caption": ""})
-    await msg.reply("❌️ Cᴀᴘᴛɪᴏɴ Dᴇʟᴇᴛᴇᴅ")
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ---------------- PREFIX / SUFFIX ----------------
-
-@bot.on_message(filters.command("set_prefix"))
-async def set_prefix(_, msg):
-
-    if len(msg.command) < 2:
-        return await msg.reply("Gɪᴠᴇ Tʜᴇ Pʀᴇғɪx Lɪᴋᴇ Tʜɪs\n\nExᴀᴍᴘʟᴇ:- /set_prefix @Aero_Unity")
-
-    text = msg.text.split(None, 1)[1]
-    await set_user(msg.from_user.id, {"prefix": text})
-    await msg.reply("Pʀᴇғɪx Sᴀᴠᴇᴅ Sᴜᴄᴄᴇssғᴜʟʟʏ✨")
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-@bot.on_message(filters.command("set_suffix"))
-async def set_suffix(_, msg):
-
-    if len(msg.command) < 2:
-        return await msg.reply("Gɪᴠᴇ Tʜᴇ Sᴜғғɪx Lɪᴋᴇ Tʜɪs\n\nExᴀᴍᴘʟᴇ:- /set_prefix @Aero_Unity")
-
-    text = msg.text.split(None, 1)[1]
-    await set_user(msg.from_user.id, {"suffix": text})
-    await msg.reply("Sᴜғғɪx Sᴀᴠᴇᴅ Sᴜᴄᴄᴇssғᴜʟʟʏ✨")
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-@bot.on_message(filters.command("see_prefix"))
-async def see_prefix(_, msg):
-
-    user = await get_user(msg.from_user.id) or {}
-    prefix = user.get("prefix")
-
-    if not prefix:
-        return await msg.reply("Yᴏᴜ Dᴏɴ'ᴛ Hᴀᴠᴇ Aɴʏ Pʀᴇғɪx Tᴏ Sᴇᴇ")
-
-    await msg.reply(f"Current prefix: `{prefix}`")
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-@bot.on_message(filters.command("del_prefix"))
-async def del_prefix(_, msg):
-
-    await set_user(msg.from_user.id, {"prefix": ""})
-    await msg.reply("Pʀᴇғɪx Dᴇʟᴇᴛᴇᴅ Sᴜᴄᴄᴇssғᴜʟʟʏ ⚡️")
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-@bot.on_message(filters.command("see_suffix"))
-async def see_suffix(_, msg):
-
-    user = await get_user(msg.from_user.id) or {}
-    suffix = user.get("suffix")
-
-    if not suffix:
-        return await msg.reply("Yᴏᴜ Dᴏɴ'ᴛ Hᴀᴠᴇ Aɴʏ Sᴜғғɪx Tᴏ Sᴇᴇ")
-
-    await msg.reply(f"Current suffix: `{suffix}`")
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-@bot.on_message(filters.command("del_suffix"))
-async def del_suffix(_, msg):
-
-    await set_user(msg.from_user.id, {"suffix": ""})
-    await msg.reply("Sᴜғғɪx Dᴇʟᴇᴛᴇᴅ Sᴜᴄᴄᴇssғᴜʟʟʏ ⚡️")
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ---------------- METADATA ----------------
-
-@bot.on_message(filters.command("metadata"))
-async def metadata(_, msg):
-
-    text = """
-ᴍᴀɴᴀɢɪɴɢ ᴍᴇᴛᴀᴅᴀᴛᴀ ғᴏʀ ʏᴏᴜʀ ᴠɪᴅᴇᴏs ᴀɴᴅ ғɪʟᴇs
-
-ᴠᴀʀɪᴏᴜꜱ ᴍᴇᴛᴀᴅᴀᴛᴀ:
-
-- ᴛɪᴛʟᴇ: Descriptive title of the media.
-- ᴀᴜᴛʜᴏʀ: The creator or owner of the media.
-- ᴀʀᴛɪꜱᴛ: The artist associated with the media.
-- ᴀᴜᴅɪᴏ: Title or description of audio content.
-- ꜱᴜʙᴛɪᴛʟᴇ: Title of subtitle content.
-- ᴠɪᴅᴇᴏ: Title or description of video content.
-
-ᴄᴏᴍᴍᴀɴᴅꜱ:
-
-➜ /settitle
-➜ /setauthor
-➜ /setartist
-➜ /setaudio
-➜ /setsubtitle
-➜ /setvideo
-
-ᴇxᴀᴍᴘʟᴇ: /settitle Welcome To My Bot
-"""
-
-    buttons = InlineKeyboardMarkup([
-        [
-        InlineKeyboardButton("Hᴏᴍᴇ", callback_data="home"),
-        InlineKeyboardButton("Cʟᴏsᴇ", callback_data="close")
-        ]
-    ])
-
-    await msg.reply(
-        text,
-        reply_markup=buttons,
-        disable_web_page_preview=True
-    )
-
-    # ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ---------------- METADATA SETTERS ----------------
-
-@bot.on_message(filters.command("settitle"))
-async def settitle(_, msg):
-
-    if len(msg.command) < 2:
-        return await msg.reply("Gɪᴠᴇ Tʜᴇ Tɪᴛʟᴇ\n\nExᴀᴍᴩʟᴇ:- /settitle Encoded By @Aero_Unity")
-
-    text = msg.text.split(None, 1)[1]
-    await set_user(msg.from_user.id, {"title": text})
-    await msg.reply("✅ Tɪᴛʟᴇ Sᴀᴠᴇᴅ")
-
-@bot.on_message(filters.command("setauthor"))
-async def setauthor(_, msg):
-
-    if len(msg.command) < 2:
-        return await msg.reply("Gɪᴠᴇ Tʜᴇ Aᴜᴛʜᴏʀ\n\nExᴀᴍᴩʟᴇ:- /setauthor @Aero_Unity")
-
-    text = msg.text.split(None, 1)[1]
-    await set_user(msg.from_user.id, {"author": text})
-    await msg.reply("✅ Aᴜᴛʜᴏʀ Sᴀᴠᴇᴅ")
-
-
-@bot.on_message(filters.command("setartist"))
-async def setartist(_, msg):
-
-    if len(msg.command) < 2:
-        return await msg.reply("Gɪᴠᴇ Tʜᴇ Aʀᴛɪꜱᴛ\n\nExᴀᴍᴩʟᴇ:- /setartist @Aero_Unity")
-
-    text = msg.text.split(None, 1)[1]
-    await set_user(msg.from_user.id, {"artist": text})
-    await msg.reply("✅ Aʀᴛɪꜱᴛ Sᴀᴠᴇᴅ")
-
-
-@bot.on_message(filters.command("setaudio"))
-async def setaudio(_, msg):
-
-    if len(msg.command) < 2:
-        return await msg.reply("Gɪᴠᴇ Tʜᴇ Aᴜᴅɪᴏ Tɪᴛʟᴇ\n\nExᴀᴍᴩʟᴇ:- /setaudio @Aero_Unity")
-
-    text = msg.text.split(None, 1)[1]
-    await set_user(msg.from_user.id, {"audio": text})
-    await msg.reply("✅ Aᴜᴅɪᴏ Sᴀᴠᴇᴅ")
-
-
-@bot.on_message(filters.command("setsubtitle"))
-async def setsubtitle(_, msg):
-
-    if len(msg.command) < 2:
-        return await msg.reply("Gɪᴠᴇ Tʜᴇ Sᴜʙᴛɪᴛʟᴇ Tɪᴛʟᴇ\n\nExᴀᴍᴩʟᴇ:- /setsubtitle @Aero_Unity")
-
-    text = msg.text.split(None, 1)[1]
-    await set_user(msg.from_user.id, {"subtitle": text})
-    await msg.reply("✅ Sᴜʙᴛɪᴛʟᴇ Sᴀᴠᴇᴅ")
-
-
-@bot.on_message(filters.command("setvideo"))
-async def setvideo(_, msg):
-
-    if len(msg.command) < 2:
-        return await msg.reply("Gɪᴠᴇ Tʜᴇ Vɪᴅᴇᴏ Tɪᴛʟᴇ\n\nExᴀᴍᴩʟᴇ:- /setvideo Encoded by @Aero_Unity")
-
-    text = msg.text.split(None, 1)[1]
-    await set_user(msg.from_user.id, {"video": text})
-    await msg.reply("✅ Vɪᴅᴇᴏ Mᴇᴛᴀᴅᴀᴛᴀ Sᴀᴠᴇᴅ")
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ---------------- SEE METADATA ---------------- #
-
-@bot.on_message(filters.command("see_metadata"))
-async def see_metadata(_, msg):
-
-    user = await get_user(msg.from_user.id) or {}
-
-    title = user.get("title", "Not Set")
-    author = user.get("author", "Not Set")
-    artist = user.get("artist", "Not Set")
-    audio = user.get("audio", "Not Set")
-    subtitle = user.get("subtitle", "Not Set")
-    video = user.get("video", "Not Set")
-
-    text = f"""
-⚙️ **Yᴏᴜʀ Mᴇᴛᴀᴅᴀᴛᴀ**
-
-◇ **Tɪᴛʟᴇ** ➜ `{title}`
-◇ **Aᴜᴛʜᴏʀ** ➜ `{author}`
-◇ **Aʀᴛɪsᴛ** ➜ `{artist}`
-◇ **Aᴜᴅɪᴏ** ➜ `{audio}`
-◇ **Sᴜʙᴛɪᴛʟᴇ** ➜ `{subtitle}`
-◇ **Vɪᴅᴇᴏ** ➜ `{video}`
-"""
-
-    buttons = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton(
-                "• Cʟᴏsᴇ •",
-                callback_data="close"
-            )
-        ]
-    ])
-
-    await msg.reply_text(
-        text,
-        reply_markup=buttons
-    )
-
-# ------------------------- #
-# Don't Remove Credit 
-# Ask Doubt @AU_Bot_Discussion 
-# Owner @Mr_Mohammed_29 
-# ------------------------- #
-
-# ---------------- DUMP CHANNEL ---------------- #
-
-@bot.on_message(filters.command("setdump"))
-async def set_dump(_, msg):
-
-    if len(msg.command) < 2:
-        return await msg.reply(
-            "Usage:\n/setdump -100xxxxxxxxxx"
-        )
-
-    channel_id = msg.command[1]
-
-    dump_channels[msg.from_user.id] = channel_id
-
-    await msg.reply(
-        f"✅ 𝗗𝘂𝗺𝗽 𝗖𝗵𝗮𝗻𝗻𝗲𝗹 𝗔𝗱𝗱𝗲𝗱\n\nID: `{channel_id}`"
-    )
-
-@bot.on_message(filters.command("chkdump"))
-async def chk_dump(_, msg):
-
-    channel_id = dump_channels.get(msg.from_user.id)
-
-    if not channel_id:
-        return await msg.reply("‼️ 𝗡𝗼 𝗗𝘂𝗺𝗽 𝗖𝗵𝗮𝗻𝗻𝗲𝗹 𝗔𝗱𝗱𝗲𝗱")
-
-    await msg.reply(
-        f"📦 𝗖𝘂𝗿𝗿𝗲𝗻𝘁 𝗗𝘂𝗺𝗽 𝗖𝗵𝗮𝗻𝗻𝗲𝗹:\n`{channel_id}`"
-    )
-
-@bot.on_message(filters.command("deldump"))
-async def del_dump(_, msg):
-
-    if msg.from_user.id in dump_channels:
-        del dump_channels[msg.from_user.id]
-
-    await msg.reply("✅ 𝗗𝘂𝗺𝗽 𝗖𝗵𝗮𝗻𝗻𝗲𝗹 𝗗𝗲𝗹𝗲𝘁𝗲𝗱")
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ---------------- UPLOAD SYSTEM ---------------- #
-
-@bot.on_message(filters.command("ub"))
-async def upload_settings(_, msg):
-
-    user_id = msg.from_user.id
-
-    users = await db.users.count_documents({})
-    bots = await db.bots.count_documents({})
-
-    mode = upload_modes.get(user_id, "main").upper()
-
-    selected_bot = upload_bots.get(user_id)
-
-    if selected_bot:
-        selected_text = "𝗧𝗼𝗸𝗲𝗻 𝗦𝗲𝘁 ✅"
-    else:
-        selected_text = "𝗡𝗼𝘁 𝗦𝗲𝘁 ❌"
-
-    dump_id = dump_channels.get(user_id, "Not set")
-
-    text = f"""
-Cʜᴏᴏsᴇ ᴡʜɪᴄʜ ʙᴏᴛ sʜᴏᴜʟᴅ ᴜᴘʟᴏᴀᴅ ᴛʜᴇ ғɪɴɪsʜᴇᴅ ғɪʟᴇ
-
-𝖬𝗈𝖽𝖾𝗌:
-• 𝖬𝖺𝗂𝗇: Aʟʟ Rᴇɴᴀᴍᴇᴅ Fɪʟᴇ ᴜᴘʟᴏᴀᴅ ᴠɪᴀ Tʜɪs Bᴏᴛ
-• 𝖯𝖾𝗋𝗌𝗈𝗇𝖺𝗅: sᴇʟᴇᴄᴛ ʏᴏᴜʀ ᴘᴇʀsᴏɴᴀʟ Uᴘʟᴏᴀᴅ ʙᴏᴛ ғᴏʀ ᴜᴘʟᴏᴀᴅɪɴɢ ғɪʟᴇs
-
-• 𝖢𝗎𝗋𝗋𝖾𝗇𝗍 𝖬𝗈𝖽𝖾: {mode}
-• 𝖲𝖾𝗅𝖾𝖼𝗍𝖾𝖽 𝖴𝗉𝗅𝗈𝖺𝖽: {selected_text}
-• 𝖣𝗎𝗆𝗉 𝖢𝗁𝖺𝗇𝗇𝖾𝗅: {dump_id}
-
-𝖢𝗁𝖾𝖼𝗄𝗌:
-Mᴀɪɴ ᴍᴏᴅᴇ ɴᴇᴇᴅs ᴍᴀɪɴ ʙᴏᴛ ᴀᴄᴄᴇss ɪғ ʏᴏᴜ ᴜsᴇ ᴅᴜᴍᴘ sᴏ ғɪʀsᴛ ᴍᴀᴋᴇ ᴛʜᴇ ʙᴏᴛ ᴀᴅᴍɪɴ!
-Pᴇʀsᴏɴᴀʟ ᴍᴏᴅᴇ ɴᴇᴇᴅs ʙᴏᴛʜ ᴍᴀɪɴ ʙᴏᴛ ᴀɴᴅ ᴄʜᴏsᴇɴ ᴜᴘʟᴏᴀᴅ ʙᴏᴛ ᴀs ᴀᴅᴍɪɴs ɪɴ ʏᴏᴜʀ ᴅᴜᴍᴘ ᴄʜᴀɴɴᴇʟ
-"""
-
-    buttons = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton(
-                f"𝗠𝗔𝗜𝗡 {'✅' if mode == 'MAIN' else ''}",
-                callback_data="ub_main"
-            ),
-
-            InlineKeyboardButton(
-                f"𝗣𝗘𝗥𝗦𝗢𝗡𝗔𝗟 {'✅' if mode == 'PERSONAL' else ''}",
-                callback_data="ub_personal"
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                "𝗨𝗣𝗟𝗢𝗔𝗗 𝗕𝗢𝗧𝗦",
-                callback_data="ub_bots"
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                "𝗔𝗗𝗗 𝗕𝗢𝗧",
-                callback_data="ub_add"
-            ),
-
-            InlineKeyboardButton(
-                "𝗗𝗘𝗟𝗘𝗧𝗘 𝗕𝗢𝗧",
-                callback_data="ub_delete"
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                "𝗖𝗟𝗢𝗦𝗘",
-                callback_data="close"
-            )
-        ]
-    ])
-
-    await msg.reply_text(
-        text,
-        reply_markup=buttons
-    )
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ---------------- ADD PERSONAL BOT ---------------- #
-
-@bot.on_message(filters.command("addbot"))
-async def add_bot(_, msg):
-
-    user_id = msg.from_user.id
-
-    if len(msg.command) < 2:
-        return await msg.reply(
-            "Usage:\n/addbot BOT_TOKEN"
-        )
-
-    token = msg.command[1]
-
-    try:
-        test = Client(
-            f"test_{user_id}",
-            api_id=API_ID,
-            api_hash=API_HASH,
-            bot_token=token,
-            in_memory=True
-        )
-
-        await test.start()
-
-        me = await test.get_me()
-
-        await test.stop()
-
-    except Exception as e:
-        return await msg.reply(f"‼️ Iɴᴠᴀʟɪᴅ Bᴏᴛ Tᴏᴋᴇɴ ,Tᴏᴋᴇɴ Sʜᴏᴜʟᴅ Bᴇ Fʀᴏᴍ @BotFather\n{e}")
-
-
-    await db.bots.update_one(
-        {"user_id": user_id},
-        {
-            "$push": {
-                "bots": {
-                    "username": me.username,
-                    "token": token,
-                    "uploads": 0
-                } 
-            },
-            "$set": {
-                "last_used": time.strftime("[%A, %d-%m-%Y %I:%M:%S %p]")
-            }
-        },
-        upsert=True
-    )
-
-    upload_bots[user_id] = token
-
-    await msg.reply(
-        f"✅️ Pᴇʀsᴏɴᴀʟ Uᴘʟᴏᴀᴅ Bᴏᴛ Sᴀᴠᴇᴅ\n\n🤖 @{me.username}"
-    )
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ---------------- DELETE BOT ---------------- #
-
-@bot.on_message(filters.command("delbot"))
-async def del_bot(_, msg):
-
-    user_id = msg.from_user.id
-
-    token = upload_bots.get(user_id)
-
-    if token:
-
-        # remove from memory
-        del upload_bots[user_id]
-
-        # reset upload mode
-        upload_modes[user_id] = "main"
-
-        # remove from database
-        await db.bots.update_one(
-            {"user_id": user_id},
-            {
-                "$pull": {
-                    "bots": {
-                        "token": token
-                    }
-                }
-            }
-        )
-
-        await msg.reply(
-            "‼️ Pᴇʀsᴏɴᴀʟ Uᴘʟᴏᴀᴅ Bᴏᴛ Dᴇʟᴇᴛᴇᴅ"
-        )
-
-    else:
-        await msg.reply(
-            "❌ Nᴏ Pᴇʀsᴏɴᴀʟ Bᴏᴛ Sᴇᴛ"
-        )
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ---------------- THUMB ----------------
-@bot.on_message(filters.photo)
-async def save_thumb(_, msg):
-
-    await set_user(msg.from_user.id, {"thumb": msg.photo.file_id})
-    await msg.reply("✅️ Tʜᴜᴍʙɴᴀɪʟ Sᴀᴠᴇᴅ")
-
-
-@bot.on_message(filters.command("view_thumb"))
-async def view_thumb(_, msg):
-
-    user = await get_user(msg.from_user.id) or {}
-    if user.get("thumb"):
-        await msg.reply_photo(user["thumb"])
-    else:
-        await msg.reply("😔 Yᴏᴜ Dᴏɴ'ᴛ Hᴀᴠᴇ Aɴy Tʜᴜᴍʙɴᴀɪʟ")
-
-
-@bot.on_message(filters.command("del_thumb"))
-async def del_thumb(_, msg):
-
-    await set_user(msg.from_user.id, {"thumb": ""})
-    await msg.reply("❌️ Tʜᴜᴍʙɴᴀɪʟ Dᴇʟᴇᴛᴇᴅ")
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ---------------- FILE / VIDEO CHOOSER ----------------
-
-@bot.on_message(filters.document | filters.video)
-async def choose(_, msg):
-
-    if await is_banned(msg.from_user.id):
-        return await msg.reply(
-            "🚫 Yᴏᴜ Aʀᴇ Bᴀɴɴᴇᴅ."
-        )
-
-    # -------- FILE SIZE CHECK -------- #
-
-    media = msg.document or msg.video
-
-    if media.file_size > MAX_FILE_SIZE:
-        return await msg.reply_text(
-            f"❌ Fɪʟᴇ Tᴏᴏ Lᴀʀɢᴇ\n\n"
-            f"📦 Mᴀx Sᴜᴘᴘᴏʀᴛᴇᴅ Sɪᴢᴇ: 2GB\n"
-            f"📁 Yᴏᴜʀ Fɪʟᴇ: {humanbytes(media.file_size)}"
-        )
-
-    user_files[msg.from_user.id] = msg
-
-    buttons = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton(
-                "• ᴅᴏᴄᴜᴍᴇɴᴛ ᴍᴏᴅᴇ •",
-                callback_data="file"
-            ),
-            InlineKeyboardButton(
-                "• ᴠɪᴅᴇᴏ ᴍᴏᴅᴇ •",
-                callback_data="video"
-            )
-        ]
-    ])
-
-    # -------- GET USER SETTINGS -------- #
-
-    user = await get_user(msg.from_user.id) or {}
-
-    custom_caption = user.get(
-        "caption",
-        ""
-    ).strip()
-
-    # -------- ORIGINAL FILE NAME -------- #
-
-    file_name = (
-        msg.document.file_name
-        if msg.document
-        else msg.video.file_name
-    )
-
-    # -------- DISPLAY NAME -------- #
-
-    display_name = (
-        custom_caption
-        if custom_caption
-        else file_name
-    )
-
-    # -------- CHOOSER MESSAGE -------- #
-
-    text = f"""
-<b>Fɪʟᴇ Nᴀᴍᴇ:</b> <code>{display_name}</code>
-
-<b>• 𝗦𝗲𝗹𝗲𝗰𝘁 𝗧𝗵𝗲 𝗢ᴜᴛᴘᴜᴛ Fɪʟᴇ Tʏᴘᴇ •</b>
-"""
-
-    await msg.reply_text(
-        text,
-        reply_markup=buttons,
-        parse_mode=ParseMode.HTML
-    )
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-#---------- Cancel ------------#
-
-@bot.on_message(filters.command("cancel"))
-async def cancel_cmd(_, msg):
-    user_id = msg.from_user.id
-
-    if user_id in active_tasks and active_tasks[user_id]:
-        active_tasks[user_id] = False
-        await msg.reply("❌ Pʀᴏᴄᴇss Cᴀɴᴄᴇʟʟᴇᴅ Sᴜᴄᴄᴇssғᴜʟʟʏ")
-    else:
-        await msg.reply("⚠️ Nᴏ Aᴄᴛɪᴠᴇ Tᴀsᴋ Tᴏ Cᴀɴᴄᴇʟ")
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-#----------- Status ------------#
-
-@bot.on_message(filters.command("status"))
-async def status(_, msg):
-
-    if msg.from_user.id != OWNER_ID:
-        return 
-
-    users_count = await users.count_documents({})
-
-    ping = await get_ping()
-
-    text = f"""
-📊 𝗕𝗼𝘁 𝗦𝘁𝗮𝘁𝘂𝘀
-
-👥 Usᴇʀs: {users_count}
-⏱  Uᴘᴛɪᴍᴇ: {get_uptime()}
-⚡ Pɪɴɢ: {ping}
-🧠 Mᴇᴍᴏʀʏ Usᴀɢᴇ: {get_memory()}
-🧾 Vᴇʀsɪᴏɴ: v3.0
-"""
-
-    buttons = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🔄 Rᴇғʀᴇsʜ", callback_data="status_refresh")]
-    ])
-
-    await msg.reply_text(text, reply_markup=buttons)
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# -------- STATS DATABASE -------- #
-
-async def get_stats():
-
-    data = await db.stats.find_one({"_id": "main"})
-
-    if not data:
-
-        data = {
-            "_id": "main",
-            "total_files": 0,
-            "total_size": 0
-        }
-
-        await db.stats.insert_one(data)
-
-    return data
-
-async def update_stats(file_size):
-
-    await db.stats.update_one(
-        {"_id": "main"},
-        {
-            "$inc": {
-                "total_files": 1,
-                "total_size": file_size
-            }
-        },
-        upsert=True
-    )
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ----------- RENAMED COMMAND ---------- #
-
-@bot.on_message(filters.command("renamed"))
-async def renamed(_, msg):
-
-    user = await get_user(msg.from_user.id) or {}
-
-    text = f"""
-┌─── ∘° Yᴏᴜʀ Lɪғᴇᴛɪᴍᴇ Sᴛᴀᴛs °∘ ───┐
-
-➤ Tᴏᴛᴀʟ Rᴇɴᴀᴍᴇs: {user.get("renames", 0)}
-➤ Tᴏᴛᴀʟ Sɪᴢᴇ: {humanbytes(user.get("size", 0))}
-➤ Mᴀx Fɪʟᴇ Sɪᴢᴇ: {humanbytes(user.get("max_size", 0))}
-
-└──────── °∘ ❉ ∘° ─────────┘
-"""
-
-    await msg.reply_photo(
-        photo="https://graph.org/file/f4a2dc831f6a6a988d450-e2f741765425dabb79.jpg",
-        caption=text
-    )
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# -------- LEADERBOARD DATABASE -------- #
-
-async def update_leaderboard(user_id):
-
-    await db.leaderboard.update_one(
-        {"user_id": user_id},
-        {
-            "$inc": {
-                "today": 1,
-                "weekly": 1,
-                "monthly": 1,
-                "alltime": 1
-            },
-            "$set": {
-                "user_id": user_id
-            }
-        },
-        upsert=True
-    )
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ----------- STATS COMMAND ------------#
-
-def progress_bar_string(percent):
-    filled = int(percent // 10)
-
-    if filled <= 0:
-        bar = "▤□□□□□□□□□"
-    else:
-        bar = "■" * (filled - 1) + "▤" + "□" * (10 - filled)
-
-    return f"[{bar}] {percent:.1f}%"
-
-
-@bot.on_message(filters.command("stats"))
-async def stats(_, msg):
-
-    start = time.time()
-
-    temp = await msg.reply_text("Cᴀʟᴄᴜʟᴀᴛɪɴɢ Pɪɴɢ....")
-
-    end = time.time()
-
-    ping = round((end - start) * 1000, 3)
-
-    users_count = await users.count_documents({})
-
-    # RAM
-    ram = psutil.virtual_memory()
-    ram_percent = ram.percent
-    ram_bar = progress_bar_string(ram_percent)
-
-    # CPU
-    cpu_percent = psutil.cpu_percent(interval=1)
-    cpu_bar = progress_bar_string(cpu_percent)
-
-    # DISK
-    disk = psutil.disk_usage('/')
-    disk_percent = disk.percent
-    disk_bar = progress_bar_string(disk_percent)
-
-    stats_data = await get_stats()
-
-    total_files = stats_data["total_files"]
-    total_storage = humanbytes(stats_data["total_size"])
-
-    text = f"""
-⌬ 𝗕𝗢𝗧 𝗦𝗧𝗔𝗧𝗜𝗦𝗧𝗜𝗖𝗦 :
-
-┎ Bᴏᴛ Uᴘᴛɪᴍᴇ : {get_uptime()}
-┃ Cᴜʀʀᴇɴᴛ Pɪɴɢ : {ping}ᴍꜱ
-┖ Tᴏᴛᴀʟ Uꜱᴇʀꜱ : {users_count}
-
-┎ RAM ( MEMORY ):
-┖ {ram_bar}
-
-┎ CPU ( USAGE ) :
-┖ {cpu_bar}
-
-┎ DISK :
-┃ {disk_bar}
-┃ Usᴇᴅ : {humanbytes(disk.used)}
-┃ Fʀᴇᴇ : {humanbytes(disk.free)}
-┖ Tᴏᴛᴀʟ : {humanbytes(disk.total)}
-
-┎ 𝗥𝗘𝗡𝗔𝗠𝗘 𝗦𝗧𝗔𝗧𝗜𝗦𝗧𝗜𝗖𝗦 :
-┃ Tᴏᴛᴀʟ Fɪʟᴇs Rᴇɴᴀᴍᴇᴅ : {total_files:,}
-┖ Tᴏᴛᴀʟ Sᴛᴏʀᴀɢᴇ Usᴇᴅ : {total_storage}
-"""
-
-    await temp.edit_text(text)
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ---------------- ADDED BOT LIST ---------------- #
-
-@bot.on_message(filters.private & filters.command("addedbots"))
-async def addedbots(_, msg):
-
-    if msg.from_user.id != OWNER_ID:
-        return await msg.reply_text("❌ ᴏɴʟʏ ᴏᴡɴᴇʀ ᴄᴀɴ ᴜsᴇ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ.")
-
-    user_id = msg.from_user.id
-    data = await db.bots.find_one({"user_id": user_id}) or {}
-
-    bots = data.get("bots", [])
-
-    # remove empty bots
-    bots = [b for b in bots if b.get("username") and b.get("token")]
-    active_index = data.get("active", 0)
-
-    if not bots:
-        await db.bots.update_one(
-            {"user_id": user_id},
-            {"$set": {"bots": []}}
-        )
-        return await msg.reply_text("❌ ɴᴏ ʙᴏᴛs ᴀᴅᴅᴇᴅ ʏᴇᴛ.")
-
-    total_uploads = 0
-    text = "🤖 ᴀᴅᴅᴇᴅ ʙᴏᴛs sᴛᴀᴛᴜs\n\n"
-
-    for i, bot_data in enumerate(bots):
-
-        username = bot_data.get("username", "Unknown")
-        uploads = bot_data.get("uploads", 0)
-
-        total_uploads += uploads
-
-        mark = "🟢" if i == active_index else "⚪"
-
-        text += (
-            f"{mark} @{username}\n"
-            f"   ├ ᴜᴘʟᴏᴀᴅs : {uploads}\n"
-            f"   └ ɪᴅx : {i}\n\n"
-        )
-
-    active_bot = bots[active_index].get("username", "None")
-    last_used = data.get("last_used", "Never Used")
-    text += (
-        "━━━━━━━━━━━━━━━\n"
-        f"➤ ᴀᴄᴛɪᴠᴇ ʙᴏᴛ: @{active_bot}\n"
-        f"➤ ᴛᴏᴛᴀʟ ʙᴏᴛs: {len(bots)}\n"
-        f"➤ ᴛᴏᴛᴀʟ ᴜᴘʟᴏᴀᴅs: {total_uploads}\n"
-        f"➤ ʟᴀsᴛ ᴜsᴇᴅ: {last_used}"
-    )
-
-    await msg.reply_photo(
-        photo="https://graph.org/file/26cccf142db47cbcc489e-5d5b36c222d0b2d898.jpg",
-        caption=text
-    )
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ----------- BAN | UNBAN -------------- #
-
-def is_admin(uid):
-    return uid == OWNER_ID
-
-
-@bot.on_message(filters.command("ban"))
-async def ban(_, msg):
-
-    if not is_admin(msg.from_user.id):
-        return
-
-    if len(msg.command) < 2:
-        return await msg.reply(
-            "Usage:\n/ban user_id"
-        )
-
-    try:
-        uid = int(msg.command[1])
-
-    except:
-        return await msg.reply("‼️ Iɴᴠᴀʟɪᴅ Usᴇʀ ID")
-
-    await set_user(uid, {"banned": True})
-
-    log_event(f"User banned: {uid}")
-
-    await msg.reply(f"🚫 𝗨𝘀𝗲𝗿 `{uid}` 𝗯𝗮𝗻𝗻𝗲𝗱 𝗦𝘂𝗰𝗰𝗲𝘀𝘀𝗳𝘂𝗹𝗹𝘆")
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-@bot.on_message(filters.command("unban"))
-async def unban(_, msg):
-
-    if not is_admin(msg.from_user.id):
-        return
-
-    if len(msg.command) < 2:
-        return await msg.reply(
-            "Usage:\n/unban user_id"
-        )
-
-    try:
-        uid = int(msg.command[1])
-
-    except:
-        return await msg.reply("‼️ Iɴᴠᴀʟɪᴅ Usᴇʀ ID")
-
-    await set_user(uid, {"banned": False})
-
-    log_event(f"User unbanned: {uid}")
-
-    await msg.reply(f"✅ 𝗨𝘀𝗲𝗿 `{uid}` 𝗨𝗻𝗯𝗮𝗻𝗻𝗲𝗱 𝗦𝘂𝗰𝗰𝗲𝘀𝘀𝗳𝘂𝗹𝗹𝘆")
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# -------------BROADCAST------------ #
-@bot.on_message(filters.command("broadcast"))
-async def broadcast(_, msg):
-
-    if msg.from_user.id != OWNER_ID:
-        return
-
-    if len(msg.command) < 2:
-        return await msg.reply("𝗍𝗒𝗉𝖾 𝗐𝗂𝗍𝗁 /broadcast 𝗆𝖾𝗌𝗌𝖺𝗀𝖾")
-
-    text = msg.text.split(None, 1)[1]
-
-    total = 0
-    success = 0
-    failed = 0
-
-    await msg.reply("⏳️ 𝖡𝗋𝗈𝖺𝖽𝖼𝖺𝗌𝗍 𝖲𝗍𝖺𝗋𝗍𝖾𝖽.....")
-
-    try:
-        users_list = await get_all_users()   
-
-        for user in users_list:              
-            total += 1
-            try:
-                await bot.send_message(user["_id"], text)
-                success += 1
-            except:
-                failed += 1
-
-        await msg.reply(
-            f"✅ 𝗕𝗿𝗼𝗮𝗱𝗰𝗮𝘀𝘁 𝗖𝗼𝗺𝗽𝗹𝗲𝘁𝗲𝗱\n\n"
-            f"◇ Tᴏᴛᴀʟ Usᴇʀs: {total}\n"
-            f"◇ Sᴜᴄᴄᴇssғᴜʟ: {success}\n"
-            f"◇ Uɴsᴜᴄᴄᴇssғᴜʟ: {failed}"
-        )
-
-    except Exception as e:
-        await msg.reply(f"❌ 𝗕𝗿𝗼𝗮𝗱𝗰𝗮𝘀𝘁 𝗘𝗿𝗿𝗼𝗿: {e}")
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ---------- Callback --------------- #
-
-@bot.on_callback_query()
-async def cb(_, query: CallbackQuery):
-
-    try:
-        await query.answer()
-    except:
-        pass
-
-    data = query.data
-
-    try:
-
-        if data == "home":
-
-            user = query.from_user
-
-            try:
-                await query.message.edit_text(
-                    get_home_text(user),
-        reply_markup=get_home_buttons(),
-                    parse_mode=ParseMode.HTML
-                )
-            except:
-                await query.message.edit_text(
-                    get_home_text(user),
-        reply_markup=get_home_buttons()
-                )
-
-        elif data == "about":
-
-            text = """
-
-        ⍟───[ MY ᴅᴇᴛᴀɪʟꜱ ]───⍟
-
-        Pʀᴏɢʀᴀᴍᴇʀ : <a href="https://t.me/Mr_Mohammed_29">ᴍᴏʜᴀᴍᴍᴇᴅ</a>
-        ꜰᴏᴜɴᴅᴇʀ ᴏꜰ : <a href="https://t.me/Aero_Unity">ᴀᴇʀᴏ ᴜɴɪᴛʏ</a>
-        Lɪʙʀᴀʀʏ : <a href="https://pypi.org/project/Pyrogram/">Pyʀᴏɢʀᴀᴍ 2.0</a>
-        Lᴀɴɢᴜᴀɢᴇ : <a href="https://www.python.org/downloads/">Pʏᴛʜᴏɴ 𝟹</a>
-        Dᴀᴛᴀʙᴀsᴇ : <a href="https://www.mongodb.com/">ᴍᴏɴɢᴏ ᴅʙ</a>
-        ᴄʜᴀɴɴᴇʟ : <a href="https://t.me/Aero_Unity">ᴀᴇʀᴏ ᴜɴɪᴛʏ</a>
-        ᴍʏ ꜱᴇʀᴠᴇʀ : <a href="https://t.me/Mr_Mohammed_29">ʙᴏᴛs sᴇʀᴠᴇʀ</a>
-        ʙᴜɪʟᴅ sᴛᴀᴛᴜs : <a href="https://t.me/Aero_Unity">ᴠ3 [sᴛᴀʙʟᴇ]</a>
-        """
-
-            await query.message.edit_text(
                 text,
-
-        reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("• Hᴏᴍᴇ •", callback_data="home")],
-                    [InlineKeyboardButton("• Cʟᴏsᴇ •", callback_data="close")]
-                    ]),
-                    disable_web_page_preview=True,
-                    parse_mode=ParseMode.HTML
-            )
-
-        elif data == "source":
-            await query.answer()
-            await query.message.edit_text(
-                "• 𝗥𝗲𝗽𝗼 •",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔗 𝗢𝗽𝗲𝗻 𝗦𝗼𝘂𝗿𝗰𝗲", url="https://github.com/MD-Developer-yt/Rename-Bot-2GB")]
-             ])
-            )
-
-        elif data == "help":
-
-            text = """
-        𝗛𝗘𝗥𝗘 𝗜𝗦 𝗧𝗛𝗘 𝗛𝗘𝗟𝗣 𝗙𝗢𝗥 𝗠𝗬 𝗖𝗢𝗠𝗠𝗔𝗡𝗗𝗦
-
-        ›› 𝗛𝗼𝘄 𝗧𝗼 𝗦𝗲𝘁 𝗖𝗮𝗽𝘁𝗶𝗼𝗻
-
-        ⦿ /set_caption - 𝖴𝗌𝖾 𝖳𝗁𝗂𝗌 𝖢𝗈𝗆𝗆𝖺𝗇𝖽 𝖳𝗈 𝖲𝖾𝗍 𝖸𝗈𝗎𝗋 𝖢𝖺𝗉𝗍𝗂𝗈𝗇
-        ⦿ /see_caption - 𝖴𝗌𝖾 𝖳𝗁𝗂𝗌 𝖢𝗈𝗆𝗆𝖺𝗇𝖽 𝖳𝗈 𝖲𝖾𝖾 𝖸𝗈𝗎𝗋 𝖢𝖺𝗉𝗍𝗂𝗈𝗇
-        ⦿ /del_caption - 𝖴𝗌𝖾 𝖳𝗁𝗂𝗌 𝖢𝗈𝗆𝗆𝖺𝗇𝖽 𝖳𝗈 𝖣𝖾𝗅𝖾𝗍𝖾 𝖸𝗈𝗎𝗋 𝖢𝖺𝗉𝗍𝗂𝗈𝗇
-
-        ›› 𝗛𝗼𝘄 𝗧𝗼 𝗦𝗲𝘁 𝗧𝗵𝘂𝗺𝗯𝗻𝗮𝗶𝗹
-
-        ⦿ 𝖸𝗈𝗎 𝖢𝖺𝗇 𝖠𝖽𝖽 𝖢𝗎𝗌𝗍𝗈𝗆 𝖳𝗁𝗎𝗆𝖻𝗇𝖺𝗂𝗅 𝖲𝗂𝗆𝗉𝗅𝗒 𝖡𝗒 𝖲𝖾𝗇𝖽𝗂𝗇𝗀 𝖠 𝖯𝗁𝗈𝗍𝗈 𝖳𝗈 𝖬𝖾
-        ⦿ /view_thumb - 𝖲𝖾𝖾 𝖸𝗈𝗎𝗋 𝖳𝗁𝗎𝗆𝖻𝗇𝖺𝗂𝗅
-        ⦿ /del_thumb - 𝖣𝖾𝗅𝖾𝗍𝖾 𝖸𝗈𝗎𝗋 𝖳𝗁𝗎𝗆𝖻𝗇𝖺𝗂𝗅
-
-        ›› 𝗛𝗼𝘄 𝗧𝗼 𝗦𝗲𝘁 𝗣𝗿𝗲𝗳𝗶𝘅 & 𝗦𝘂𝗳𝗳𝗶𝘅
-
-        ⦿ /set_prefix - ᴛᴏ ꜱᴇᴛ ᴀ ᴄᴜꜱᴛᴏᴍ ᴘʀᴇғɪx.
-        ⦿ /see_prefix - ᴛᴏ ᴠɪᴇᴡ ʏᴏᴜʀ ᴄᴜꜱᴛᴏᴍ ᴘʀᴇғɪx
-        ⦿ /del_prefix - ᴛᴏ ᴅᴇʟᴇᴛᴇ ʏᴏᴜʀ ᴄᴜꜱᴛᴏᴍ ᴘʀᴇғɪx
-
-        ⦿ /set_suffix - ᴛᴏ ꜱᴇᴛ ᴀ ᴄᴜꜱᴛᴏᴍ ꜱᴜғғɪx.
-        ⦿ /see_suffix - ᴛᴏ ᴠɪᴇᴡ ʏᴏᴜʀ ᴄᴜꜱᴛᴏᴍ ꜱᴜғғɪx.
-        ⦿ /del_suffix - ᴛᴏ ᴅᴇʟᴇᴛᴇ ʏᴏᴜʀ ᴄᴜꜱᴛᴏᴍ ꜱᴜғғɪx.
-
-        ›› 𝗛𝗼𝘄 𝗧𝗼 𝗦𝗲𝘁 𝗖𝘂𝘀𝘁𝗼𝗺 𝗠𝗲𝘁𝗮𝗱𝗮𝘁𝗮
-
-        ⦿ /metadata - 𝖴𝗌𝖾 𝖳𝗁𝗂𝗌 𝖢𝗈𝗆𝗆𝖺𝗇𝖽 𝖳𝗈 𝖲𝖾𝗍 𝖢𝗎𝗌𝗍𝗈𝗆 𝖬𝖾𝗍𝖺𝖽𝖺𝖺
-        ⦿ /see_metadata - 𝖴𝗌𝖾 𝖳𝗁𝗂𝗌 𝖢𝗈𝗆𝗆𝖺𝗇𝖽 𝖳𝗈 𝖲𝖾𝖾 𝖸𝗈𝗎𝗋 𝖢𝗎𝗌𝗍𝗈𝗆 𝖬𝖾𝗍𝖺𝖽𝖺
-        """
-
-            await query.message.edit_text(
-                text,
-        reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("• Hᴏᴍᴇ •", callback_data="home")],
-                    [InlineKeyboardButton("• ᴄʟᴏsᴇ •", callback_data="close")]
-                ])
-            )
-
-        elif data == "status_refresh":
-
-            if query.from_user.id != OWNER_ID:
-                return await query.answer("❌ 𝗬𝗼𝘂 𝗮𝗿𝗲 𝗻𝗼𝘁 𝗮𝘂𝘁𝗵𝗼𝗿𝗶𝘇𝗲𝗱 𝘁𝗼 𝘂𝘀𝗲 𝘁𝗵𝗶𝘀 𝗰𝗼𝗺𝗺𝗮𝗻𝗱", show_alert=True)
-
-            users_count = await users.count_documents({})
-
-            ping = await get_ping()
-
-            text = f"""
-        📊 𝗕𝗼𝘁 𝗦𝘁𝗮𝘁𝘂𝘀
-
-        👥 Usᴇʀs: {users_count}
-        ⏱  Uᴘᴛɪᴍᴇ: {get_uptime()}
-        ⚡ Pɪɴɢ: {ping}
-        🧠 Mᴇᴍᴏʀʏ Usᴀɢᴇ: {get_memory()}
-        🧾 Vᴇʀsɪᴏɴ: v3.0
-        """
-
-            await query.message.edit_text(
-                text,
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔄 Refresh", callback_data="status_refresh")]
-                ])
-            )
-
-        elif data == "owner":
-            await query.message.edit_text(f"👑 Owner ID: {OWNER_ID}")
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-        # ---------------- UPLOAD MODE CALLBACKS ---------------- #
-
-        elif data == "ub_main":
-
-            upload_modes[query.from_user.id] = "main"
-
-            await query.answer(
-                "Main Upload Mode Enabled"
-            )
-
-            mode = "MAIN"
-
-            selected_bot = upload_bots.get(query.from_user.id)
-
-            if selected_bot:
-                selected_text = "𝗧𝗼𝗸𝗲𝗻 𝗦𝗲𝘁 ✅"
-            else:
-                selected_text = "𝗡𝗼𝘁 𝗦𝗲𝘁 ❌"
-
-            dump_id = dump_channels.get(
-                query.from_user.id,
-                "Not set"
-            )
-
-            text = f"""
-        Cʜᴏᴏsᴇ ᴡʜɪᴄʜ ʙᴏᴛ sʜᴏᴜʟᴅ ᴜᴘʟᴏᴀᴅ ᴛʜᴇ ғɪɴɪsʜᴇᴅ ғɪʟᴇ
-
-        𝖬𝗈𝖽𝖾𝗌:
-        • 𝖬𝖺𝗂𝗇: Aʟʟ Rᴇɴᴀᴍᴇᴅ Fɪʟᴇ ᴜᴘʟᴏᴀᴅ ᴠɪᴀ Tʜɪs Bᴏᴛ
-        • 𝖯𝖾𝗋𝗌𝗈𝗇𝖺𝗅: sᴇʟᴇᴄᴛ ʏᴏᴜʀ ᴘᴇʀsᴏɴᴀʟ Uᴘʟᴏᴀᴅ ʙᴏᴛ ғᴏʀ ᴜᴘʟᴏᴀᴅɪɴɢ ғɪʟᴇs
-
-        • 𝖢𝗎𝗋𝗋𝖾𝗇𝗍 𝖬𝗈𝖽𝖾: {mode}
-        • 𝖲𝖾𝗅𝖾𝖼𝗍𝖾𝖽 𝖴𝗉𝗅𝗈𝖺𝖽: {selected_text}
-        • 𝖣𝗎𝗆𝗉 𝖢𝗁𝖺𝗇𝗇𝖾𝗅: {dump_id}
-
-        𝖢𝗁𝖾𝖼𝗄𝗌:
-         Mᴀɪɴ ᴍᴏᴅᴇ ɴᴇᴇᴅs ᴍᴀɪɴ ʙᴏᴛ ᴀᴄᴄᴇss ɪғ ʏᴏᴜ ᴜsᴇ ᴅᴜᴍᴘ sᴏ ғɪʀsᴛ ᴍᴀᴋᴇ ᴛʜᴇ ʙᴏᴛ ᴀᴅᴍɪɴ!
-         Pᴇʀsᴏɴᴀʟ ᴍᴏᴅᴇ ɴᴇᴇᴅs ʙᴏᴛʜ ᴍᴀɪɴ ʙᴏᴛ ᴀɴᴅ ᴄʜᴏsᴇɴ ᴜᴘʟᴏᴀᴅ ʙᴏᴛ ᴀs ᴀᴅᴍɪɴs ɪɴ ʏᴏᴜʀ ᴅᴜᴍᴘ ᴄʜᴀɴɴᴇʟ
-        """
-
-            buttons = InlineKeyboardMarkup([
-                [
-                    InlineKeyboardButton(
-                        "𝗠𝗔𝗜𝗡 ✅",
-                        callback_data="ub_main"
-                    ),
-
-                    InlineKeyboardButton(
-                        "𝗣𝗘𝗥𝗦𝗢𝗡𝗔𝗟",
-                        callback_data="ub_personal"
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        "𝗨𝗣𝗟𝗢𝗔𝗗 𝗕𝗢𝗧𝗦",
-                        callback_data="ub_bots"
-                    )
-                ],
-
-                [
-                    InlineKeyboardButton(
-                        "𝗔𝗗𝗗 𝗕𝗢𝗧",
-                        callback_data="ub_add"
-                    ),
-
-                    InlineKeyboardButton(
-                        "𝗗𝗘𝗟𝗘𝗧𝗘 𝗕𝗢𝗧",
-                        callback_data="ub_delete"
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        "𝗖𝗟𝗢𝗦𝗘",
-                        callback_data="close"
-                    )
-                ]
-            ])
-
-            await query.message.edit_text(
-                text,
-                reply_markup=buttons
-            )
-
-
-        elif data == "ub_personal":
-
-            upload_modes[query.from_user.id] = "personal"
-
-            await query.answer(
-                "Personal Upload Mode Enabled"
-            )
-
-            mode = "PERSONAL"
-
-            selected_bot = upload_bots.get(query.from_user.id)
-
-            if selected_bot:
-                selected_text = "𝗧𝗼𝗸𝗲𝗻 𝗦𝗲𝘁 ✅"
-            else:
-                selected_text = "𝗡𝗼𝘁 𝗦𝗲𝘁 ❌"
-
-            dump_id = dump_channels.get(
-                query.from_user.id,
-                "Not set"
-            )
-
-            text = f"""
-        Cʜᴏᴏsᴇ ᴡʜɪᴄʜ ʙᴏᴛ sʜᴏᴜʟᴅ ᴜᴘʟᴏᴀᴅ ᴛʜᴇ ғɪɴɪsʜᴇᴅ ғɪʟᴇ
-
-        𝖬𝗈𝖽𝖾𝗌:
-        • 𝖬𝗈𝖽𝖾𝗌: Aʟʟ Rᴇɴᴀᴍᴇᴅ Fɪʟᴇ ᴜᴘʟᴏᴀᴅ ᴠɪᴀ Tʜɪs Bᴏᴛ
-        • 𝖯𝖾𝗋𝗌𝗈𝗇𝖺𝗅: sᴇʟᴇᴄᴛ ʏᴏᴜʀ ᴘᴇʀsᴏɴᴀʟ Uᴘʟᴏᴀᴅ ʙᴏᴛ ғᴏʀ ᴜᴘʟᴏᴀᴅɪɴɢ ғɪʟᴇs
-
-        • 𝖢𝗎𝗋𝗋𝖾𝗇𝗍 𝖬𝗈𝖽𝖾: {mode}
-        • 𝖲𝖾𝗅𝖾𝖼𝗍𝖾𝖽 𝖴𝗉𝗅𝗈𝖺𝖽: {selected_text}
-        • 𝖣𝗎𝗆𝗉 𝖢𝗁𝖺𝗇𝗇𝖾𝗅: {dump_id}
-
-        𝖢𝗁𝖾𝖼𝗄𝗌:
-        Mᴀɪɴ ᴍᴏᴅᴇ ɴᴇᴇᴅs ᴍᴀɪɴ ʙᴏᴛ ᴀᴄᴄᴇss ɪғ ʏᴏᴜ ᴜsᴇ ᴅᴜᴍᴘ sᴏ ғɪʀsᴛ ᴍᴀᴋᴇ ᴛʜᴇ ʙᴏᴛ ᴀᴅᴍɪɴ!
-        Pᴇʀsᴏɴᴀʟ ᴍᴏᴅᴇ ɴᴇᴇᴅs ʙᴏᴛʜ ᴍᴀɪɴ ʙᴏᴛ ᴀɴᴅ ᴄʜᴏsᴇɴ ᴜᴘʟᴏᴀᴅ ʙᴏᴛ ᴀs ᴀᴅᴍɪɴs ɪɴ ʏᴏᴜʀ ᴅᴜᴍᴘ ᴄʜᴀɴɴᴇʟ
-        """
-
-            buttons = InlineKeyboardMarkup([
-                [
-                    InlineKeyboardButton(
-                        "𝗠𝗔𝗜𝗡",
-                        callback_data="ub_main"
-                    ),
-
-                    InlineKeyboardButton(
-                        "𝗣𝗘𝗥𝗦𝗢𝗡𝗔𝗟 ✅",
-                        callback_data="ub_personal"
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        "𝗨𝗣𝗟𝗢𝗔𝗗 𝗕𝗢𝗧𝗦",
-                        callback_data="ub_bots"
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        "𝗔𝗗𝗗 𝗕𝗢𝗧",
-                        callback_data="ub_add"
-                    ),
-
-                    InlineKeyboardButton(
-                        "𝗗𝗘𝗟𝗘𝗧𝗘 𝗕𝗢𝗧",
-                        callback_data="ub_delete"
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        "𝗖𝗟𝗢𝗦𝗘",
-                        callback_data="close"
-                    )
-                ]
-            ])
-
-            await query.message.edit_text(
-                text,
-                reply_markup=buttons
-            )
-
-
-        elif data == "ub_bots":
-
-            selected_bot = upload_bots.get(query.from_user.id)
-
-            if selected_bot:
-                text = "✅ 𝖯𝖾𝗋𝗌𝗈𝗇𝖺𝗅 𝖴𝗉𝗅𝗈𝖺𝖽 𝖡𝗈𝗍 𝖠𝖽𝖽𝖾𝖽"
-            else:
-                text = "‼️ 𝖭𝗈 𝖯𝖾𝗋𝗌𝗈𝗇𝖺𝗅 𝖴𝗉𝗅𝗈𝖺𝖽 𝖡𝗈𝗍 𝖠𝖽𝖽𝖾𝖽"
-
-            await query.answer()
-
-            await query.message.reply_text(text)
-
-
-        elif data == "ub_add":
-
-            await query.answer()
-
-            await query.message.reply_text(
-                "Send:\n/addbot BOT_TOKEN"
-            )
-
-
-        elif data == "ub_delete":
-
-            user_id = query.from_user.id
-
-            # remove memory
-            upload_bots.pop(user_id, None)
-
-            # reset mode
-            upload_modes[user_id] = "main"
-
-            # remove from database
-            await db.bots.update_one(
-                {"user_id": user_id},
-                {
-                    "$set": {
-                        "bots": []
-                    }
-                }
-            )
-
-            await query.answer(
-                "Personal Upload Bot Deleted"
-            )
-
-            await query.message.reply_text(
-                "‼️ Pᴇʀsᴏɴᴀʟ Uᴘʟᴏᴀᴅ Bᴏᴛ Dᴇʟᴇᴛᴇᴅ"
-            ) 
-
-        elif data == "close":
-            await query.message.delete()
-
-        elif data.startswith("lb_"):
-
-            await query.answer()  
-
-            period = data.split("_")[1]
-
-            text = await generate_leaderboard(period)
-
-            buttons = InlineKeyboardMarkup([
-                [
-                    InlineKeyboardButton("📅 Tᴏᴅᴀʏ", callback_data="lb_today"),
-                    InlineKeyboardButton("📆 Wᴇᴇᴋʟʏ", callback_data="lb_weekly")
-                ],
-                [
-                    InlineKeyboardButton("🗓 Mᴏɴᴛʜʟʏ", callback_data="lb_monthly"),
-                    InlineKeyboardButton("🏆 Aʟʟ Tɪᴍᴇ", callback_data="lb_alltime")
-                ]
-            ])
-
-            await query.message.edit_text(
-                text,
-                reply_markup=buttons
-            )
-
-        elif data.startswith("cancel_"):
-
-            uid = int(data.split("_")[1])
-
-            active_tasks[uid] = False
-
-            await query.message.edit_text("𝗣𝗿𝗼𝗰𝗲𝘀𝘀 𝗖𝗮𝗻𝗰𝗲𝗹𝗹𝗲𝗱")
-            return
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-     # ----------- Callback -------------- #
-
-        elif data in ["file", "video"]:
-
-            user_id = query.from_user.id  
-
-            await query.message.delete()
-
-            user_mode[user_id] = data
-
-            if await is_banned(user_id):
-                return await query.answer("🚫 𝗕𝗮𝗻𝗻𝗲𝗱 𝗨𝘀𝗲𝗿", show_alert=True)
-
-            if user_id not in user_files:
-                return await query.answer("Eʀʀᴏʀ ‼️ Sᴇɴᴅ Fɪʟᴇ Aɢᴀɪɴ", show_alert=True)
-
-            msg = user_files[user_id]  
-
-            mode = user_mode.get(user_id, "file")
-
-            active_tasks[user_id] = True
-
-            file = msg.document or msg.video
-            is_video = (
-                msg.video is not None or
-                (msg.document and str(msg.document.mime_type).startswith("video"))
-            )  
-
-            log_event(f"User {user_id} uploaded file: {file.file_name}")
-
-            progress_msg = await query.message.reply_text(
-                "<blockquote>📥 <b>Dᴏᴡɴʟᴏᴀᴅɪɴɢ...</b></blockquote>",
                 parse_mode=ParseMode.HTML,
-                reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("Cᴀɴᴄᴇʟ", callback_data=f"cancel_{user_id}")]
-                ])
+                reply_markup=buttons
+            )
+        except Exception as e:
+
+            await wait.edit_text(
+                f"❌ Error:\n{e}"
             )
 
-            start_time = time.time()
-            last_edit = 0
-
-            async def dprog(current, total):
-
-                nonlocal last_edit
-
-                if not active_tasks.get(user_id):
-                    raise Exception("Cancelled")
-
-                now = time.time()
-
-                # prevent too frequent edits
-                if now - last_edit < 1:
-                    return
-
-                last_edit = now
-                percent, speed, eta = calc_progress(current, total, start_time)
-
-                if current >= total:
-                    percent = 100
-
-                filled = int(percent / 10)
-                bar = "⬢" * filled + "⬡" * (10 - filled)
-
-                text = (
- f"<blockquote>"
- f"📥 <b>Dᴏᴡɴʟᴏᴀᴅɪɴɢ...</b>\n\n"
- f"{bar}\n\n"
- f"📦 <b>Sɪᴢᴇ:</b> {humanbytes(current)} / {humanbytes(total)}\n"
- f"⚡ <b>Sᴘᴇᴇᴅ:</b> {humanbytes(speed)}/s\n"
- f"⏳ <b>Eᴛᴀ:</b> {time_formatter(eta)}"
- f"</blockquote>"
-                )
-
-                try:
-                    await progress_msg.edit_text(
-                        text,
-                        parse_mode=ParseMode.HTML
-                    )
-                except:
-                    pass
-
-            try:
-                file_path = await msg.download(file_name=file.file_name, progress=dprog)
-            except Exception as e:
-                await query.message.edit_text("❌ Download Cancelled")
-                return
-
-            user = await get_user(user_id) or {}
-
-            thumb = user.get("thumb")
-
-            prefix = user.get("prefix", "")
-            suffix = user.get("suffix", "")
-            caption = user.get("caption", "")
-
-            original_name = file.file_name if hasattr(file, "file_name") else "video.mp4"
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-            # -------- NORMAL RENAME -------- #
-
-            final_name = caption if caption else file.file_name
-
-            base_name, ext = os.path.splitext(file.file_name)
-
-            final_name = final_name.replace("_", " ")
-
-            new_name = final_name + ext
-
-            output = f"temp_{user_id}.tmp{ext}"
-
-            metadata_enabled = any([
-                user.get("title"),
-                user.get("author"),
-                user.get("artist"),
-                user.get("video")
-            ])
-
-            if metadata_enabled:
-                final = add_metadata(
-                    file_path,
-                    output,
-                    user.get("title", ""),
-                    user.get("author", ""),
-                    user.get("artist", ""),
-                    user.get("video", "")
-                )
-
-            else:
-                final = file_path
-
-
-            if not os.path.exists(final) or os.path.getsize(final) < 100000:
-                final = file_path
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-            # -------- FIX REAL FILE NAME -------- #
-
-            fixed_file = new_name
-
-            import shutil
-
-            shutil.copy(final, fixed_file)
-
-            final = fixed_file
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-        # -------- THUMB FIX -------- #
-            thumb_path = None
-            try:
-                thumb_path = await get_thumbnail(
-                    bot,
-                    thumb,
-                    is_video,
-                    file_path,
-                    user_id
-                )
-            except Exception as e:
-                print("Thumbnail Error:", e)
-                thumb_path = None
-
-            if not thumb_path or not os.path.exists(thumb_path):
-                thumb_path = None
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-        # -------- UPLOAD START -------- #
-            await progress_msg.edit_text(
-                "<blockquote>📤 <b>Uᴘʟᴏᴀᴅɪɴɢ sᴛᴀʀᴛᴇᴅ...</b></blockquote>",
-                parse_mode=ParseMode.HTML
-            )
-
-            duration, width, height = (0, 0, 0)
-
-            if mode == "video":
-                try:
-                    duration, width, height = get_video_metadata(final)
-                except Exception as e:
-                    print("Mᴇᴛᴀᴅᴀᴛᴀ Aᴘᴘʟɪᴇᴅ Fᴀɪʟᴇᴅ ᴏʀ Eʀʀᴏʀ 👾....:", e)
-
-            start_time = time.time()
-            last_edit = 0
-
-            async def prog(current, total):
-
-                nonlocal last_edit
-
-                if not active_tasks.get(user_id):
-                    raise Exception("Cancelled")
-
-                now = time.time()
-
-                # prevent spam edits
-                if now - last_edit < 1:
-                    return
-
-                last_edit = now
-
-                percent, speed, eta = calc_progress(current, total, start_time)
-
-                filled = int(percent / 10)
-                bar = "⬢" * filled + "⬡" * (10 - filled)
-
-                text = (
- f"<blockquote>"
- f"📤 <b>Uᴘʟᴏᴀᴅɪɴɢ...</b>\n\n"
- f"{bar}\n\n"
- f"📦 <b>Sɪᴢᴇ:</b> {humanbytes(current)} / {humanbytes(total)}\n"
- f"⚡ <b>Sᴘᴇᴇᴅ:</b> {humanbytes(speed)}/s\n"
- f"⏳ <b>Eᴛᴀ:</b> {time_formatter(eta)}"
- f"</blockquote>"
-                )
-
-                try:
-                    await progress_msg.edit_text(
-                        text,
-                        parse_mode=ParseMode.HTML
-                    )
-                except:
-                    pass
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-            # -------- SELECT UPLOAD CLIENT -------- #
-
-            upload_client = bot
-
-            mode_selected = upload_modes.get(user_id, "main")
-            token = upload_bots.get(user_id)
-
-            if mode_selected == "personal" and token:
-
-                try:
-                    if user_id not in personal_clients:
-
-                        personal_clients[user_id] = Client(
-                            name=f"upload_{user_id}",
-                            api_id=API_ID,
-                            api_hash=API_HASH,
-                            bot_token=token,
-                            in_memory=True
-                        )
-
-                        await personal_clients[user_id].start()
-
-                        upload_client = personal_clients[user_id]
-
-                except Exception as e:
-                    print("ᴘᴇʀsᴏɴᴀʟ ʙᴏᴛ ᴇʀʀᴏʀ:", e)
-
-                    upload_client = bot
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-           # -------- SEND FILE -------- #
-            file_size = 0
-
-            try:
-
-               # -------- VIDEO MODE -------- #
-                if mode == "video":
-
-                    await asyncio.sleep(0) 
-
-                    await upload_client.send_video(
-                        chat_id=msg.chat.id,
-                        video=final,
-                        caption=caption,
-                        thumb=thumb_path,
-                        duration=duration,
-                        width=width,
-                        height=height,
-                        supports_streaming=True,
-                        has_spoiler=False,
-                        progress=prog, 
-                        disable_notification=True
-                    )
-
-                    try:
-                        file_size = os.path.getsize(final)
-                    except:
-                        file_size = 0
-
-                    await db.users.update_one(
-                        {"_id": msg.from_user.id},
-                        {
-                            "$inc": {
-                                "renames": 1,
-                                "size": file_size
-                            },
-
-                            "$max": {
-                                "max_size": file_size
-                            }
-                        },
-                        upsert=True
-                    )
-
-                    await update_leaderboard(user_id)
-
-                    await progress_msg.delete()
-
-                    dump_id = dump_channels.get(user_id)
-
-                    if dump_id:
-                        try:
-                            await upload_client.send_video(
-                                chat_id=int(dump_id),
-                                video=final,
-                                caption=caption,
-                                thumb=thumb_path,
-                                duration=duration,
-                                width=width,
-                                height=height,
-                                supports_streaming=True,
-                            )
-
-                            await progress_msg.delete()
-
-                        except Exception as e:
-                            print("Dᴜᴍᴘ Eʀʀᴏʀ:", e)
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-               # -------- DOCUMENT MODE -------- #
+    # ---------------- REFRESH DATETIME ---------------- #
+    @bot.on_callback_query(filters.regex("^refresh_datetime$"))
+    async def refresh_datetime(_, query):
+
+        await query.answer()
+        zones = {
+            "🇬🇧 UTC": "UTC",
+            "🇮🇳 IST": "Asia/Kolkata",
+            "🇦🇪 GST": "Asia/Dubai",
+            "🇸🇬 SGT": "Asia/Singapore",
+            "🇯🇵 JST": "Asia/Tokyo",
+            "🇺🇸 EST": "America/New_York",
+            "🇺🇸 PST": "America/Los_Angeles",
+            "🇪🇺 CET": "Europe/Paris",
+            "🇷🇺 MSK": "Europe/Moscow",
+            "🇦🇺 AEST": "Australia/Sydney"
+        }
+        text = "🕐 <b>Cᴜʀʀᴇɴᴛ Dᴀᴛᴇ & Tɪᴍᴇ</b>\n\n"
+
+        for name, zone in zones.items():
+
+            tz = pytz.timezone(zone)
+            now = datetime.now(tz)
+
+            offset = now.strftime("%z")
+
+            if offset:
+                hrs = int(offset[:3])
+                mins = int(offset[3:]) // 60
+
+                if mins == 0:
+                    utc = f"UTC{hrs:+d}"
                 else:
+                    utc = f"UTC{hrs:+d}.{mins}"
+            else:
+                utc = "UTC"
 
-                    await asyncio.sleep(0) 
-
-                    await upload_client.send_document(
-                        chat_id=msg.chat.id,
-                        document=final,
-                        file_name=new_name.replace("_", " "),
-                        caption=caption,
-                        thumb=thumb_path,
-                        progress=prog,
-                        disable_notification=True
-                    )
-
-                    try:
-                        file_size = os.path.getsize(final)
-                    except:
-                        file_size = 0
-
-                    await db.users.update_one(
-                        {"_id": msg.from_user.id},
-                        {
-                            "$inc": {
-                                "renames": 1,
-                                "size": file_size
-                            },
-
-                            "$max": {
-                                "max_size": file_size
-                            }
-                        },
-                        upsert=True
-                    )
-
-                    await progress_msg.delete()
-
-                    await update_leaderboard(user_id)
-
-                    dump_id = dump_channels.get(user_id)
-
-                    if dump_id:
-                        try:
-                            await upload_client.send_document(
-                                chat_id=int(dump_id),
-                                document=final,
-                                file_name=new_name,
-                                caption=caption,
-                                thumb=thumb_path
-                            )
-
-                        except Exception as e:
-                            print("Dᴜᴍᴘ Eʀʀᴏʀ:", e)
-
-            except Exception as e:
-
-                try:
-                    await progress_msg.edit_text(
-                        f"❌ Uᴘʟᴏᴀᴅ Cᴀɴᴄᴇʟʟᴇᴅ\n\n{str(e)}"
-                    )
-                except:
-                    pass
-
-                return
-
-            finally:
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-                # -------- FILE SIZE -------- #
-                file_size = 0
-                try:
-                    file_size = os.path.getsize(final)
-                except:
-                    pass
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-                # -------- CLEANUP -------- #
-
-                try:
-                    if os.path.exists(file_path):
-                        os.remove(file_path)
-                    if os.path.exists(final):
-                        os.remove(final)
-                except Exception:
-                    pass
-
-                try:
-                    if thumb_path and os.path.exists(thumb_path):
-                        os.remove(thumb_path)
-                except Exception:
-                    pass
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-            # -------- STATS COUNTER -------- #
-
-            await update_stats(file_size)
-
-            user_files.pop(user_id, None)
-
-            await query.message.delete()
-            active_tasks.pop(user_id, None)
-            user_mode.pop(user_id, None)
-
-    except Exception as e:
-
-        if "MESSAGE_NOT_MODIFIED" in str(e):
-            return
-
-        print("Callback Error:", e)
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ---------------- LEADERBOARD FUNCTION ---------------- #
-
-async def generate_leaderboard(period):
-
-    period = period.lower()
-
-    cursor = db.leaderboard.find({period: {"$exists": True}}).sort(period, -1).limit(20)
-
-    text = f"📈 Lᴇᴀᴅᴇʀʙᴏᴀʀᴅ: {period.upper()}\n\n"
-    text += "Tᴏᴘ 20 Usᴇʀs:\n\n"
-
-    total_files = 0
-
-    async for data in cursor:
-
-        uid = data.get("user_id")
-        count = data.get(period, 0)
-
-        total_files += count
+            text += (
+                f"» {name}: "
+                f"<code>{now.strftime('%d/%m/%Y %H:%M')}</code> "
+                f"{utc}\n"
+            )
 
         try:
-            user = await bot.get_users(uid)
-            name = user.first_name[:25]
+            await query.message.edit_text(
+                text,
+                parse_mode=ParseMode.HTML,
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton(
+                                "• ʀᴇғʀᴇsʜ •",
+                                callback_data="refresh_datetime"
+                            ),
+                            InlineKeyboardButton(
+                                "• ᴄʟᴏsᴇ •",
+                                callback_data="close"
+                            )
+                        ]
+                    ]
+                )
+            )
+        except Exception:
+            pass
+
+    # ---------------- TEXT TO GIF ---------------- #
+    @bot.on_message(filters.command("text2gif"))
+    async def text2gif(_, message):
+
+        if len(message.command) < 2:
+            return await message.reply_text(
+                "Usage:\n/text2gif ʏᴏᴜʀ ᴛᴇxᴛ"
+            )
+        text = message.text.split(None, 1)[1]
+        wait = await message.reply_text(
+            "🎞 <b>Gᴇɴᴇʀᴀᴛɪɴɢ Gɪғ...</b>\n"
+            "⏳ Pʟᴇᴀsᴇ ᴡᴀɪᴛ ᴀ sᴇᴄ...",
+            parse_mode=ParseMode.HTML
+        )
+        try:
+            frames = []
+
+            for i in range(15):
+
+                img = Image.new(
+                    "RGB",
+                    (800, 300),
+                    (25, 25, 25)
+                )
+
+                draw = ImageDraw.Draw(img)
+
+                try:
+                    font = ImageFont.truetype(
+                        "arial.ttf",
+                        45
+                    )
+                except:
+                    font = ImageFont.load_default()
+
+                x = 30 + (i * 15)
+
+                draw.text(
+                    (x, 120),
+                    text,
+                    fill=(255, 255, 255),
+                    font=font
+                )
+
+                frames.append(img)
+
+            gif_file = f"textgif_{message.from_user.id}.gif"
+
+            imageio.mimsave(
+                gif_file,
+                frames,
+                duration=0.10
+            )
+            await wait.delete()
+
+            buttons = InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "• ᴜᴘᴅᴀᴛᴇs •",
+                            url="https://t.me/Aero_Unity"
+                        ),
+                        InlineKeyboardButton(
+                            "• ᴄʟᴏsᴇ •",
+                            callback_data="close"
+                        )
+                    ]
+                ]
+            )
+            await message.reply_animation(
+                animation=gif_file,
+                caption=(
+                    "🎞 <b>Tᴇxᴛ Tᴏ Gɪғ</b>\n\n"
+                    f"<code>{text}</code>"
+                ),
+                parse_mode=ParseMode.HTML,
+                reply_markup=buttons
+            )
+            os.remove(gif_file)
+
+        except Exception as e:
+
+            await wait.edit_text(
+                f"❌ Error:\n{e}"
+            )
+
+    # ---------------- WEATHER ---------------- #
+    @bot.on_message(filters.command("weather"))
+    async def weather_cmd(_, message):
+
+        if len(message.command) < 2:
+            return await message.reply_text(
+                "Usage:\n/weather ᴄɪᴛʏ ɴᴀᴍᴇ"
+            )
+        city = message.text.split(None, 1)[1].strip()
+        WEATHER_CACHE[message.from_user.id] = city
+        wait = await message.reply_text(
+            "🌦 <b>Fᴇᴛᴄʜɪɴɢ Wᴇᴀᴛʜᴇʀ...</b>\n"
+            "⏳ Pʟᴇᴀsᴇ ᴡᴀɪᴛ ᴀ sᴇᴄ...",
+            parse_mode=ParseMode.HTML
+        )
+        try:
+            # -------- GEO SEARCH -------- #
+
+            geo_url = (
+                f"http://api.openweathermap.org/geo/1.0/direct"
+                f"?q={quote(city)}"
+                f"&limit=1"
+                f"&appid={WEATHER_API}"
+            )
+
+            geo = requests.get(
+                geo_url,
+                timeout=20
+            ).json()
+
+            if not geo:
+                return await wait.edit_text(
+                    "‼️ ᴄʜᴇᴄᴋ ᴛʜᴇ sᴘᴇʟʟɪɴɢ ᴛʀʏ ᴀɢᴀɪɴ ᴏʀ ʏᴏᴜʀ ʀᴇǫᴜᴇsᴛᴇᴅ ᴄɪᴛʏ ɴᴏᴛ ғᴏᴜɴᴅ"
+                )
+
+            place = geo[0]
+
+            lat = place["lat"]
+            lon = place["lon"]
+
+            city_name = place["name"]
+            state = place.get("state", "")
+            country = place["country"]   
+
+            # -------- CURRENT WEATHER -------- #
+            current_url = (
+                f"https://api.openweathermap.org/data/2.5/weather"
+                f"?lat={lat}"
+                f"&lon={lon}"
+                f"&appid={WEATHER_API}"
+                f"&units=metric"
+            )
+            current = requests.get(
+                current_url,
+                timeout=20
+            ).json()
+
+            # -------- FORECAST -------- #
+            forecast_url = (
+                f"https://api.openweathermap.org/data/2.5/forecast"
+                f"?lat={lat}"
+                f"&lon={lon}"
+                f"&appid={WEATHER_API}"
+                f"&units=metric"
+            )
+
+            forecast = requests.get(
+                forecast_url,
+                timeout=20
+            ).json()
+
+            temp = round(current["main"]["temp"])
+            feels = round(current["main"]["feels_like"])
+
+            temp_f = round((temp * 9 / 5) + 32)
+            feels_f = round((feels * 9 / 5) + 32)
+
+            condition = current["weather"][0]["main"]
+
+            humidity = current["main"]["humidity"]
+
+            wind = round(current["wind"]["speed"] * 3.6)
+
+            visibility = round(current["visibility"] / 1000)
+
+            pressure = current["main"]["pressure"]
+
+            clouds = current["clouds"]["all"]
+
+            uv = "0"
+            uv_text = "Low"
+
+            days = {}
+
+            for item in forecast["list"]:
+
+                day = item["dt_txt"].split()[0]
+
+                if day not in days:
+
+                    days[day] = {
+                        "min": item["main"]["temp_min"],
+                        "max": item["main"]["temp_max"],
+                        "weather": item["weather"][0]["main"]
+                    }
+
+                else:
+
+                    days[day]["min"] = min(
+                        days[day]["min"],
+                        item["main"]["temp_min"]
+                    )
+
+                    days[day]["max"] = max(
+                        days[day]["max"],
+                        item["main"]["temp_max"]
+                    )
+
+            forecast_text = ""
+
+            count = 0
+
+            for day, value in days.items():
+
+                if count == 3:
+                    break
+
+                name = datetime.strptime(
+                    day,
+                    "%Y-%m-%d"
+                ).strftime("%a")
+
+                forecast_text += (
+                    f"» {name}: "
+                    f"{round(value['min'])}°C ~ "
+                    f"{round(value['max'])}°C "
+                    f"({value['weather']})\n"
+                )
+
+                count += 1
+
+            text = f"""
+ ☀️ <b>ᴡᴇᴀᴛʜᴇʀ ɪɴ {city_name}, {state}, {country}</b>
+
+ 🌡️ ᴛᴇᴍᴘᴇʀᴀᴛᴜʀᴇ : <code>{temp}°C / {temp_f}°F</code>
+ 🤔 ғᴇᴇʟs ʟɪᴋᴇ : <code>{feels}°C / {feels_f}°F</code>
+ ☁️ ᴄᴏɴᴅɪᴛɪᴏɴ : <code>{condition}</code>
+ 💧 ʜᴜᴍɪᴅɪᴛʏ : <code>{humidity}%</code>
+ 💨 ᴡɪɴᴅ : <code>{wind} km/h</code>
+ 👁️ ᴠɪsɪʙɪʟɪᴛʏ : <code>{visibility} km</code>
+ ☀️ ᴜᴠ ɪɴᴅᴇx : <code>{uv} ({uv_text})</code>
+ ☁️ ᴄʟᴏᴜᴅ ᴄᴏᴠᴇʀ : <code>{clouds}%</code>
+ 📊 ᴘʀᴇssᴜʀᴇ : <code>{pressure} mb</code>
+
+ 📅 <b>Fᴏʀᴇᴄᴀsᴛ:</b>
+ {forecast_text}
+ """
+
+            await wait.delete()
+
+            buttons = InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "• ʀᴇғʀᴇsʜ •",
+                            callback_data="weather_refresh"
+                        ),
+                        InlineKeyboardButton(
+                            "• ᴜᴘᴅᴀᴛᴇs •",
+                            url="https://t.me/Aero_Unity"
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            "• ᴄʟᴏsᴇ •",
+                            callback_data="close"
+                        )
+                    ]
+                ]
+            )
+
+            await message.reply_text(
+                text,
+                parse_mode=ParseMode.HTML,
+                reply_markup=buttons
+            )
+
+        except Exception as e:
+            await wait.edit_text(
+                f"❌ Error:\n{e}"
+            )
+
+    # ---------------- WEATHER REFRESH ---------------- #
+    @bot.on_callback_query(filters.regex("^weather_refresh$"))
+    async def weather_refresh(_, query):
+
+        await query.answer(
+            "Rᴇғʀᴇsʜɪɴɢ..."
+        )
+        city = WEATHER_CACHE.get(query.from_user.id)
+
+        if not city:
+            return await query.answer(
+                "ᴡᴇᴀᴛʜᴇʀ ᴇxᴘɪʀᴇᴅ",
+                show_alert=True
+            )
+
+        class FakeMessage:
+            command = ["weather", city]
+            text = f"/weather {city}"
+            from_user = query.from_user
+
+            async def reply_text(self, *args, **kwargs):
+                return await query.message.reply_text(*args, **kwargs)
+
+        await weather_cmd(_, FakeMessage())
+
+    # ---------------- IMAGINE ---------------- #
+    @bot.on_message(filters.command("imagine"))
+    async def imagine(_, message):
+
+        if len(message.command) < 2:
+            return await message.reply_text(
+                "Usage:\n/imagine ʏᴏᴜʀ ᴛᴇxᴛ ᴏʀ ᴘʀᴏᴍᴘᴛ"
+            )
+
+        prompt = message.text.split(None, 1)[1]
+
+        wait = await message.reply_text(
+            "🎨 Gᴇɴᴇʀᴀᴛɪɴɢ Iᴍᴀɢᴇ...\n"
+            "Pʟᴇᴀsᴇ Wᴀɪᴛ A Sᴇᴄ..."
+        )
+        try:
+            url = f"https://image.pollinations.ai/prompt/{quote(prompt)}"
+
+            img = requests.get(url, timeout=120)
+
+            if img.status_code != 200:
+                return await wait.edit_text(
+                    "‼️ Fᴀɪʟᴇᴅ Tᴏ Gᴇɴᴇʀᴀᴛᴇ ɪᴍᴀɢᴇ , ᴛʀʏ ᴀɢᴀɪɴ."
+                )
+
+            file = "imagine.png"
+
+            with open(file, "wb") as f:
+                f.write(img.content)
+
+            await wait.delete()
+
+            await message.reply_photo(
+                photo=file,
+                caption=(
+                    f"🎨 <b>Iᴍᴀɢᴇ Gᴇɴᴇʀᴀᴛᴇᴅ Sᴜᴄᴄᴇssғᴜʟʟʏ</b>\n"
+                    " ʙʏ @Aero_Unity\n\n"
+                    f"📝 <code>{prompt}</code>"
+                ),
+                parse_mode=ParseMode.HTML,
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton(
+                                "• Rᴇɢᴇɴᴇʀᴀᴛᴇ •",
+                                callback_data=f"regen_{prompt}"
+                            ),
+                            InlineKeyboardButton(
+                                "• ᴄʟᴏsᴇ •",
+                                callback_data="close_imagine"
+                            )
+                        ]
+                    ]
+                )
+            )
+            os.remove(file)
+
+        except Exception as e:
+            await wait.edit_text(
+                f"❌ Error:\n{e}"
+            )
+
+    # ---------------- REGENERATE BUTTON ---------------- #
+    @bot.on_callback_query(filters.regex("^regen_"))
+    async def regenerate_image(_, query):
+
+        prompt = query.data.replace("regen_", "")
+
+        wait = await query.message.reply_text(
+            "🔄 Rᴇɢᴇɴᴇʀᴀᴛɪɴɢ Iᴍᴀɢᴇ...\n"
+            "Pʟᴇᴀsᴇ Wᴀɪᴛ..."
+        )
+        try:
+            url = f"https://image.pollinations.ai/prompt/{quote(prompt)}"
+
+            img = requests.get(url, timeout=120)
+
+            if img.status_code != 200:
+                return await wait.edit_text(
+                    "‼️ Fᴀɪʟᴇᴅ Tᴏ Rᴇɢɴᴇʀᴀᴛᴇ ɪᴍᴀɢᴇ , ᴛʀʏ ᴀɢᴀɪɴ."
+                )
+            file = "regen.png"
+
+            with open(file, "wb") as f:
+                f.write(img.content)
+
+            await wait.delete()
+
+            await query.message.reply_photo(
+                photo=file,
+                caption=(
+                    f"🎨 <b>Iᴍᴀɢᴇ Rᴇɢᴇɴᴇʀᴀᴛᴇᴅ Sᴜᴄᴄᴇssғᴜʟʟʏ</b>\n"
+                    "Pᴏᴡᴇʀᴇᴅ ʙʏ @Aero_Unity\n\n"
+                    f"📝 <code>{prompt}</code>"
+                ),
+                parse_mode=ParseMode.HTML,
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton(
+                                "• Rᴇɢᴇɴᴇʀᴀᴛᴇ •",
+                                callback_data=f"regen_{prompt}"
+                            ),
+                            InlineKeyboardButton(
+                                "• ᴄʟᴏsᴇ •",
+                                callback_data="close_imagine"
+                            )
+                        ]
+                    ]
+                )
+            )
+            os.remove(file)
+
+        except Exception as e:
+            await wait.edit_text(
+                f"❌ Error:\n{e}"
+            )
+
+    # ---------------- CLOSE BUTTON ---------------- #
+    @bot.on_callback_query(filters.regex("^close_imagine$"))
+    async def close_imagine(_, query):
+
+        try:
+            await query.message.delete()
         except:
-            name = "Unknown"
+            pass
 
-        text += f"👤 « {name} » {count}\n"
-
-    text += f"\nTᴏᴛᴀʟ Sᴏʀᴛᴇᴅ Fɪʟᴇs: {total_files}"
-
-    return text
+        await query.answer("• ᴄʟᴏsᴇᴅ • ✅️")
 
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
 
-# ---------------- LEADERBOARD COMMAND ---------------- #
+    # ==========================================
+    # FEEDBACK
+    # ==========================================
 
-@bot.on_message(filters.private & filters.command("leaderboard"))
-async def leaderboard(_, msg):
+    @bot.on_message(filters.command("feedback") & filters.private)
+    async def feedback_cmd(client, message):
 
-    text = await generate_leaderboard("today")
-
-    buttons = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton("📅 Tᴏᴅᴀʏ", callback_data="lb_today"),
-            InlineKeyboardButton("📆 Wᴇᴇᴋʟʏ", callback_data="lb_weekly")
-        ],
-        [
-            InlineKeyboardButton("🗓 Mᴏɴᴛʜʟʏ", callback_data="lb_monthly"),
-            InlineKeyboardButton("🏆 Aʟʟ Tɪᴍᴇ", callback_data="lb_alltime")
-        ]
-    ])
-
-    await msg.reply_text(
-        text,
-        reply_markup=buttons
-    )
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ---------------- USER INFO ---------------- #
-
-@bot.on_message(filters.private & filters.command("info"))
-async def user_info(_, msg):
-
-    user = msg.from_user
-
-    has_photo = "ɴᴏ ❌"
-
-    try:
-        async for _ in bot.get_chat_photos(user.id, limit=1):
-            has_photo = "ʏᴇs 🌠"
-            break
-    except:
-        pass
-
-    bio_text = "Nᴏ Bɪᴏ"
-
-    try:
-        full = await bot.get_users(user.id)
-
-        if hasattr(full, "bio") and full.bio:
-            bio_text = full.bio
-
-    except:
-        pass
-
-    username = f"@{user.username}" if user.username else "Nᴏɴᴇ"
-
-    text = f"""
-👤 ᴜsᴇʀ ɪɴғᴏ
-━━━━━━━━━━━━━━━
-➣ ᴜsᴇʀ ɪᴅ: {user.id}
-➣ ɴᴀᴍᴇ: {user.first_name}
-➣ ᴜsᴇʀɴᴀᴍᴇ: {username}
-➣ ʟᴀsᴛ sᴇᴇɴ: ⏱ ʀᴇᴄᴇɴᴛʟʏ
-➣ ᴅᴀᴛᴀᴄᴇɴᴛᴇʀ ɪᴅ: {user.dc_id if user.dc_id else "Unknown"}
-➣ ʟᴀɴɢᴜᴀɢᴇ: {user.language_code if user.language_code else "Unknown"}
-━━━━━━━━━━━━━━━
-➣ sᴄᴀᴍ ᴀᴄᴄᴏᴜɴᴛ: {"ʏᴇs ❌" if user.is_scam else "ɴᴏ ☑️"}
-➣ ғᴀᴋᴇ ᴀᴄᴄᴏᴜɴᴛ: {"ʏᴇs ❌" if user.is_fake else "ɴᴏ ☑️"}
-➣ ᴘʀᴏғɪʟᴇ ᴘɪᴄᴛᴜʀᴇ: {has_photo}
-━━━━━━━━━━━━━━━
-➣ ʙɪᴏ: {bio_text}
-"""
-
-    buttons = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton(
-                "🌐 Vɪᴇᴡ Pʀᴏғɪʟᴇ",
-                url=f"https://t.me/{user.username}" if
-                user.username else "https://t.me"
-            )
-        ]
-    ])
-
-    await msg.reply_text(
-        text,
-        reply_markup=buttons
+        keyboard = InlineKeyboardMarkup(
+            [
+                 [
+                    InlineKeyboardButton(
+                        "• Cᴏɴᴛᴀᴄᴛ Oᴡɴᴇʀ •",
+                        url="https://t.me/Mr_Mohammed_29"
+                    )
+                 ],
+                 [
+                    InlineKeyboardButton(
+                        "• ᴄʟᴏsᴇ •",
+                        callback_data="close_feedback"
+                    )
+                 ]
+            ]
         )
 
-#------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# ---------------- DONATE ---------------- #
-
-@bot.on_message(filters.private & filters.command("donate"))
-async def donate(_, msg):
-
-    text = """
-💖 Sᴜᴘᴘᴏʀᴛ Tʜᴇ Bᴏᴛ
-
-Iғ Yᴏᴜ Lɪᴋᴇ Tʜɪs Bᴏᴛ Aɴᴅ Wᴀɴᴛ
-Tᴏ Sᴜᴘᴘᴏʀᴛ Tʜᴇ Dᴇᴠᴇʟᴏᴘᴇʀ,
-Yᴏᴜ Cᴀɴ Dᴏɴᴀᴛᴇ ❤️
-
-━━━━━━━━━━━━━━━
-
-➣ ᴜᴘɪ ɪᴅ:
-<code>mohammed.1006@superyes</code>
-
-➣ ǫʀ ᴄᴏᴅᴇ:
-<a href='https://telegra.ph/file/2197f68092b7161075d2d-34f98b9f2e12216868.jpg'>Click Here</a>
-
-━━━━━━━━━━━━━━━
-
-Aғᴛᴇʀ Pᴀʏᴍᴇɴᴛ Sᴇɴᴅ Sᴄʀᴇᴇɴsʜᴏᴛ
-Tᴏ Dᴇᴠᴇʟᴏᴘᴇʀ
-"""
-
-    buttons = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton(
-                "• Dᴇᴠᴇʟᴏᴘᴇʀ •",
-                url="https://t.me/Mr_Mohammed_29"
-            )
-        ]
-    ])
-
-    await msg.reply_text(
-        text,
-        reply_markup=buttons,
-        disable_web_page_preview=True
-    )
-
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
-
-# --------------- ALIVE ---------------- #
-
-@bot.on_message(filters.command("alive"))
-async def alive(client, message):
-
-    await message.reply_photo(
-        photo="https://graph.org/file/af61bc94f516c210ecb37-7cdb22e66ea9539e3b.jpg",
-        caption=(
-            "Yᴏᴜ ᴀʀᴇ ᴠᴇʀʏ ʟᴜᴄᴋʏ 🤞 I ᴀᴍ ᴀʟɪᴠᴇ ❤️\n\n"
-            "Pʀᴇss /start ᴛᴏ ᴜsᴇ ᴍᴇ!"
+        await message.reply_photo(
+            photo=FEEDBACK_IMAGE,
+            caption=(
+                "**Aɴʏ Fᴇᴇᴅʙᴀᴄᴋ**\n\n"
+                "**- Fᴏᴜɴᴅ A Bᴜɢ?**\n"
+                "**- Hᴀᴠᴇ A Sᴜɢɢᴇsᴛɪᴏɴ?**\n"
+                "**- Nᴇᴇᴅ ʜᴇʟᴘ?**\n\n"
+                "ᴄʟɪᴄᴋ **Contact Owner** Bᴇʟᴏᴡ."
+            ),
+            reply_markup=keyboard
         )
-    )
 
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
 
-# ---------------- RUN ---------------- #
+    # ==========================================
+    # CLOSE FEEDBACK
+    # ==========================================
 
-keep_alive()
+    @bot.on_callback_query(filters.regex("^close_feedback$"))
+    async def close_feedback(client, query):
 
-print("""
-╭──────────────────────╮
-│  ᴍᴏʜᴀᴍᴍᴇᴅᴅᴇv-ʏᴛ    │
-│  ʀᴇɴᴀᴍᴇ ʙᴏᴛ 2ɢʙ     │
-╰──────────────────────╯
-""")
+        await query.answer()
 
-print("✅ BOT STARTED")
-print("✅ FORCE SUB CONFIG LOADED")
-
-# ---------------- BOT START ---------------- #
-
-bot.run()
+        try:
+            await query.message.delete()
+        except:
+            pass
 
 # ------------------------- #
 # Don't Remove Credit 
-# Ask Doubt @AU_Bot_Discussion 
-# Owner @Mr_Mohammed_29 
+# Owner @Mr_Mohammed_29
 # ------------------------- #
+
+    # ==========================================
+    # MAINTENANCE COMMAND
+    # ==========================================
+
+    @bot.on_message(filters.command("maintenance") & filters.private)
+    async def maintenance_cmd(client, message):
+
+        if message.from_user.id != OWNER_ID:
+            return await message.reply_text(
+                "<b>ʙᴀᴋᴋᴀ ! ʏᴏᴜ ᴀʀᴇ ɴᴏᴛ ᴍʏ ꜱᴇɴᴘᴀɪ!!</b>"
+            )
+
+        if len(message.command) < 2:
+
+            status = "🟢 Eɴᴀʙʟᴇᴅ" if MAINTENANCE["enabled"] else "🔴 Dɪsᴀʙʟᴇᴅ"
+
+            return await message.reply_text(
+                f"""<b>Mᴀɪɴᴛᴇɴᴀɴᴄᴇ Pᴀɴɴᴇʟ</b>
+
+    <b>• Sᴛᴀᴛᴜs :</b> {status}
+    <b>• Rᴇᴀsᴏɴ :</b> <code>{MAINTENANCE["reason"]}</code>
+ 
+    <b>Usage</b>
+    /maintenance on Bot Updating...
+    /maintenance off"""
+            )
+
+        args = message.text.split(maxsplit=2)
+        mode = args[1].lower()
+
+        if mode == "on":
+
+            reason = "No reason provided"
+
+            if len(args) >= 3:
+                reason = args[2]
+
+            MAINTENANCE["enabled"] = True
+            MAINTENANCE["reason"] = reason
+
+            await message.reply_text(
+                f"""✅ <b>Mᴀɪɴᴛᴇɴᴀɴᴄᴇ Eɴᴀʙʟᴇᴅ</b>
+
+    📝 <b>Rᴇᴀsᴏɴ</b> : <code>{reason}</code>"""
+            )
+
+        elif mode == "off":
+
+            MAINTENANCE["enabled"] = False
+            MAINTENANCE["reason"] = "No reason provided"
+
+            await message.reply_text(
+                "✅ <b>Mᴀɪɴᴛᴇɴᴀɴᴄᴇ Dɪsᴀʙʟᴇᴅ</b>"
+            )
+
+        else:
+
+            await message.reply_text(
+                "Usage:\n"
+                "/maintenance on Bot Updating...\n"
+                "/maintenance off"
+            )
+
+
+    # ==========================================
+    # BLOCK USERS DURING MAINTENANCE
+    # ==========================================
+
+    @bot.on_message(filters.private, group=-100)
+    async def maintenance_checker(client, message):
+
+        if message.from_user.id == OWNER_ID:
+            return
+
+        if not MAINTENANCE["enabled"]:
+            return
+
+        await message.reply_text(
+            f"""<b>Bᴏᴛ Uɴᴅᴇʀ Mᴀɪɴᴛᴇɴᴀɴᴄᴇ</b>
+
+    • Bᴏᴛ Is Uᴘᴅᴀᴛɪɴɢ, Fɪxɪɴɢ Bᴜɢs, Eʀʀᴏʀs ᴀɴᴅ Aᴅᴅɪɴɢ Nᴇᴡ Fᴇᴀᴛᴜʀᴇs
+
+    📝 <b>Rᴇᴀsᴏɴ</b> : <code>{MAINTENANCE["reason"]}</code>"""
+        )
+
+        raise StopPropagation
+
+    # ==========================================
+    # AI + OCR + PDF TOOLS
+    # ==========================================
+
+    gemini_client = None
+
+    if GEMINI_API_KEY:
+        gemini_client = genai.Client(
+            api_key=GEMINI_API_KEY
+        )
+
+
+    AI_MODEL = "gemini-3.6-flash"
+
+    # ==========================================
+    # GEMINI HELPER
+    # ==========================================
+
+    async def gemini_text(prompt):
+
+        if not gemini_client:
+            raise Exception(
+                "GEMINI_API_KEY is not configured."
+            )
+
+        response = await gemini_client.aio.models.generate_content(
+            model=AI_MODEL,
+            contents=prompt
+        )
+
+        if not response.text:
+            raise Exception("AI returned an empty response.")
+
+        return response.text.strip()
+
+    # ==========================================
+    # /SMARTNAME
+    # ==========================================
+
+    @bot.on_message(filters.command("smartname") & filters.private)
+    async def smartname_cmd(client, message):
+
+        if len(message.command) < 2:
+            return await message.reply_text(
+                "🧠 <b>Sᴍᴀʀᴛ Nᴀᴍᴇ</b>\n\n"
+                "Usage:\n"
+                "<code>/smartname movie name</code>\n\n"
+                "Eample:\n"
+                "<code>/smartname Avengers Endgame 2019</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        text = message.text.split(None, 1)[1].strip()
+
+        wait = await message.reply_text(
+            "🧠 <b>Cʀᴇᴀᴛɪɴɢ Sᴍᴀʀᴛ Fɪʟᴇɴᴀᴍᴇ...</b>",
+            parse_mode=ParseMode.HTML
+        )
+
+        try:
+            prompt = f"""
+    Create a clean professional filename for this content:
+
+    {text}
+
+    Rules:
+    - Keep the original meaning.
+    - Remove unnecessary symbols.
+    - Use a professional filename style.
+    - Do not add an extension.
+    - Return only the filename.
+    """
+
+            result = await gemini_text(prompt)
+
+            result = result.replace("`", "").strip()
+
+            await wait.edit_text(
+                f"🧠 <b>Sᴍᴀʀᴛ Fɪʟᴇɴᴀᴍᴇ</b>\n\n"
+                f"<code>{result}</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        except Exception as e:
+
+            await wait.edit_text(
+                f"❌ <b>Eʀʀᴏʀ</b>\n\n"
+                f"<code>{str(e)[:1000]}</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+    # ==========================================
+    # /TRANSLATE
+    # ==========================================
+
+    @bot.on_message(filters.command("translate") & filters.private)
+    async def translate_cmd(client, message):
+
+        if len(message.command) < 3:
+            return await message.reply_text(
+                "🌍 <b>Tʀᴀɴsʟᴀᴛᴏʀ</b>\n\n"
+                "Usage:\n"
+                "<code>/translate language text</code>\n\n"
+                "Example:\n"
+                "<code>/translate Hindi Hello how are you?</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        args = message.text.split(None, 2)
+
+        language = args[1]
+        text = args[2]
+
+        wait = await message.reply_text(
+            "🌍 <b>Tʀᴀɴsʟᴀᴛɪɴɢ...</b>",
+            parse_mode=ParseMode.HTML
+        )
+
+        try:
+            prompt = f"""
+    Translate the following text into {language}.
+
+    - Keep the meaning accurate and natural.
+    - Return only the translated text.
+    -  Text:
+      {text}
+    """
+
+            result = await gemini_text(prompt)
+
+            await wait.edit_text(
+                f"🌍 <b>Tʀᴀɴsʟᴀᴛɪᴏɴ</b>\n\n"
+                f"{result}",
+                parse_mode=ParseMode.HTML
+            )
+
+        except Exception as e:
+
+            await wait.edit_text(
+                f"❌ <b>Eʀʀᴏʀ</b>\n\n"
+                f"<code>{str(e)[:1000]}</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+    # ==========================================
+    # /SUMMARIZE
+    # ==========================================
+
+    @bot.on_message(filters.command("summarize") & filters.private)
+    async def summarize_cmd(client, message):
+
+        if len(message.command) < 2:
+            return await message.reply_text(
+                "📝 <b>Sᴜᴍᴍᴀʀɪᴢᴇ</b>\n\n"
+                "Usage:\n"
+                "<code>/summarize your text</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        text = message.text.split(None, 1)[1].strip()
+
+        wait = await message.reply_text(
+            "📝 <b>Sᴜᴍᴍᴀʀɪᴢɪɴɢ...</b>",
+            parse_mode=ParseMode.HTML
+        ) 
+
+        try:
+            prompt = f"""
+    Summarize the following text.
+
+    Rules:
+    - Keep the important information.
+    - Remove unnecessary repetition.
+    - Use simple language.
+    - Use bullet points when useful.
+
+    Text:
+    {text}
+    """
+
+            result = await gemini_text(prompt)
+
+            await wait.delete()
+
+            for i in range(0, len(result), 4000):
+
+                await message.reply_text(
+                    result[i:i + 4000]
+                )
+
+        except Exception as e:
+
+            await wait.edit_text(
+                f"❌ <b>Eʀʀᴏʀ</b>\n\n"
+                f"<code>{str(e)[:1000]}</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+    # ==========================================
+    # /GRAMMAR
+    # ==========================================
+
+    @bot.on_message(filters.command("grammar") & filters.private)
+    async def grammar_cmd(client, message):
+
+        if len(message.command) < 2:
+            return await message.reply_text(
+                "✍️ <b>Gʀᴀᴍᴍᴀʀ Cʜᴇᴄᴋᴇʀ</b>\n\n"
+                "Usage:\n"
+                "<code>/grammar your sentence</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        text = message.text.split(None, 1)[1].strip()
+
+        wait = await message.reply_text(
+            "✍️ <b>Cʜᴇᴄᴋɪɴɢ Gʀᴀᴍᴍᴀʀ...</b>",
+            parse_mode=ParseMode.HTML
+        )
+
+        try:
+            prompt = f"""
+    Correct the grammar and spelling of this text.
+
+    Rules:
+    - Preserve the original meaning.
+    - Make the English natural.
+    - Return the corrected text first.
+    - Then briefly list important corrections.
+
+    Text:
+    {text}
+    """
+
+            result = await gemini_text(prompt)
+
+            await wait.delete()
+
+            for i in range(0, len(result), 4000):
+
+                await message.reply_text(
+                    result[i:i + 4000]
+                )
+
+        except Exception as e:
+
+            await wait.edit_text(
+                f"❌ <b>Eʀʀᴏʀ</b>\n\n"
+                f"<code>{str(e)[:1000]}</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+    # ==========================================
+    # /CAPTIONAI
+    # ==========================================
+
+    @bot.on_message(filters.command("captionai") & filters.private)
+    async def captionai_cmd(client, message):
+
+        if len(message.command) < 2:
+            return await message.reply_text(
+                "🎬 <b>Aɪ Cᴀᴘᴛɪᴏɴ Gᴇɴᴇʀᴀᴛᴏʀ</b>\n\n"
+                "Usage:\n"
+                "<code>/captionai movie name</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        text = message.text.split(None, 1)[1].strip()
+
+        wait = await message.reply_text(
+            "🎬 <b>Gᴇɴᴇʀᴀᴛɪɴɢ Cᴀᴘᴛɪᴏɴ...</b>",
+            parse_mode=ParseMode.HTML
+        )
+
+        try:
+            prompt = f"""
+    Create a professional Telegram movie/file caption.
+
+    Content:
+    {text}
+
+    Include:
+    • Title
+    • Short description
+    • Genre if known
+    • Release year if known
+    • Quality if provided
+    • Audio/subtitle information if provided
+
+    Do not invent information that is not provided.
+    Use attractive but clean formatting.
+    """
+
+            result = await gemini_text(prompt)
+
+            await wait.delete()
+
+            for i in range(0, len(result), 4000):
+
+                await message.reply_text(
+                    result[i:i + 4000]
+                )
+
+        except Exception as e:
+
+            await wait.edit_text(
+                f"❌ <b>Eʀʀᴏʀ</b>\n\n"
+                f"<code>{str(e)[:1000]}</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+
+    # ==========================================
+    # /OCR
+    # ==========================================
+
+    @bot.on_message(
+        filters.command("ocr") & filters.private
+    )
+    async def ocr_cmd(client, message):
+
+        if not message.reply_to_message:
+            return await message.reply_text(
+                "🖼️ <b>Oᴄʀ</b>\n\n"
+                "Reply to an image/photo with:\n"
+                "<code>/ocr</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        replied = message.reply_to_message
+
+        if not replied.photo and not replied.document:
+            return await message.reply_text(
+                "❌ Pʟᴇᴀsᴇ Rᴇᴘʟʏ Tᴏ Aɴ Iᴍᴀɢᴇ."
+            )
+
+        wait = await message.reply_text(
+            "🔎 <b>Exᴛʀᴀᴄᴛɪɴɢ Tᴇxᴛ...</b>",
+            parse_mode=ParseMode.HTML
+        )
+
+        file_path = None
+
+        try:
+
+            file_path = await replied.download()
+
+            with open(file_path, "rb") as f:
+                image_bytes = f.read()
+
+            mime_type = "image/jpeg"
+
+            if file_path.lower().endswith(".png"):
+                mime_type = "image/png"
+
+            elif file_path.lower().endswith(".webp"):
+                mime_type = "image/webp"
+
+            image_part = types.Part.from_bytes(
+                data=image_bytes,
+                mime_type=mime_type
+            )
+
+            response = await gemini_client.aio.models.generate_content(
+                model=AI_MODEL,
+                contents=[
+                    image_part,
+                    (
+                        "Extract all readable text from this image. "
+                        "Preserve the original wording as accurately "
+                        "as possible. Return only the extracted text."
+                    )
+                ]
+            )
+
+            result = response.text
+
+            if not result:
+                return await wait.edit_text(
+                    "❌ Nᴏ Rᴇᴀᴅᴀʙʟᴇ Tᴇxᴛ Fᴏᴜɴᴅ."
+                )
+
+            await wait.delete()
+
+            for i in range(0, len(result), 4000):
+
+                await message.reply_text(
+                    result[i:i + 4000]
+                )
+
+        except Exception as e:
+
+            await wait.edit_text(
+                f"❌ <b>Oᴄʀ Eʀʀᴏʀ</b>\n\n"
+                f"<code>{str(e)[:1000]}</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        finally:
+
+            if file_path and os.path.exists(file_path):
+
+                try:
+                    os.remove(file_path)
+                except Exception:
+                    pass
+
+    # ==========================================
+    # /PDF
+    # ==========================================
+
+    @bot.on_message(
+        filters.command("pdf") & filters.private
+    )
+    async def pdf_cmd(client, message):
+
+        if len(message.command) < 2:
+            return await message.reply_text(
+                "📄 <b>Pᴅғ Gᴇɴᴇʀᴀᴛᴏʀ</b>\n\n"
+                "Usage:\n"
+                "<code>/pdf Your text here</code>\n\n"
+                "Example:\n"
+                "<code>/pdf hii hello</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        text = message.text.split(None, 1)[1].strip()
+
+        wait = await message.reply_text(
+            "📄 <b>Cʀᴇᴀᴛɪɴɢ Pᴅғ...</b>\n"
+            "⏳ Pʟᴇᴀsᴇ ᴡᴀɪᴛ...",
+            parse_mode=ParseMode.HTML
+        )
+
+        pdf_file = f"pdf_{message.from_user.id}.pdf"
+
+        try:
+
+            def create_pdf():
+
+                from reportlab.lib.pagesizes import A4
+                from reportlab.pdfgen import canvas
+                from reportlab.pdfbase.pdfmetrics import stringWidth
+
+                page_width, page_height = A4
+
+                c = canvas.Canvas(
+                    pdf_file,
+                    pagesize=A4
+                )
+
+                c.setTitle("Generated PDF")
+
+                margin_left = 50
+                margin_right = 50
+                margin_top = 50
+                margin_bottom = 50
+
+                max_width = (
+                    page_width
+                    - margin_left
+                    - margin_right
+                )
+
+                font_name = "Helvetica"
+                font_size = 12
+                line_height = 18
+
+                c.setFont(
+                    font_name,
+                    font_size
+                )
+
+                y = page_height - margin_top
+
+                # Handle multiple lines
+                paragraphs = text.splitlines()
+
+                if not paragraphs:
+                    paragraphs = [text]
+
+                for paragraph in paragraphs:
+
+                    words = paragraph.split()
+
+                    # Empty line
+                    if not words:
+                        y -= line_height
+
+                        if y < margin_bottom:
+                            c.showPage()
+                            c.setFont(
+                                font_name,
+                                font_size
+                            )
+                            y = page_height - margin_top
+
+                        continue
+
+                    line = ""
+
+                    for word in words:
+
+                       test_line = (
+                           f"{line} {word}"
+                       ).strip()
+
+                       if stringWidth(
+                           test_line,
+                           font_name,
+                           font_size
+                       ) <= max_width:
+
+                           line = test_line
+
+                       else:
+
+                           if line:
+
+                               c.drawString(
+                                   margin_left,
+                                   y,
+                                   line
+                               )
+
+                               y -= line_height
+
+                           line = word
+
+                           if y < margin_bottom:
+
+                               c.showPage()
+
+                               c.setFont(
+                                   font_name,
+                                   font_size
+                               )
+
+                               y = page_height - margin_top
+
+                    if line:
+
+                        c.drawString(
+                            margin_left,
+                            y,
+                            line
+                        )
+
+                        y -= line_height
+
+                    y -= 5
+
+                    if y < margin_bottom:
+
+                        c.showPage()
+
+                        c.setFont(
+                            font_name,
+                            font_size
+                        )
+
+                        y = page_height - margin_top
+
+                c.save()
+
+            await asyncio.to_thread(
+                create_pdf
+            )
+
+            # Make sure PDF actually exists
+            if not os.path.exists(pdf_file):
+                raise Exception(
+                    "PDF file was not created."
+                )
+
+            if os.path.getsize(pdf_file) == 0:
+                raise Exception(
+                    "Generated PDF is empty."
+                )
+
+            await wait.delete()
+
+            await message.reply_document(
+                document=pdf_file,
+                caption=(
+                    "📄 <b>Pᴅғ Cʀᴇᴀᴛᴇᴅ Sᴜᴄᴄᴇssғᴜʟʟʏ</b>\n\n"
+                    "📝 <b>Tᴇxᴛ:</b> "
+                    f"<code>{text[:1000]}</code>\n"
+                    "○ Pᴏᴡᴇʀᴇᴅ ʙʏ : <b>@Aero_Unity</b>"
+                ),
+                parse_mode=ParseMode.HTML
+            )
+
+        except Exception as e:
+
+            await wait.edit_text(
+                f"❌ <b>Pᴅғ Eʀʀᴏʀ</b>\n\n"
+                f"<code>{str(e)[:1000]}</code>",
+                parse_mode=ParseMode.HTML
+            )
+
+        finally:
+
+            if os.path.exists(pdf_file):
+
+                try:
+                    os.remove(pdf_file)
+                except Exception:
+                    pass
