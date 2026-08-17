@@ -8,7 +8,6 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from config import MONGO_URI
 import time
 
-
 # ------------------------- #
 # Don't Remove Credit 
 # Ask Doubt @AU_Bot_Discussion 
@@ -21,7 +20,7 @@ db = client.rename_bot
 users = db.users
 leaderboard = db.leaderboard
 user_bots = db.bots
-
+settings = db.settings
 
 # ------------------------- #
 # Don't Remove Credit 
@@ -121,6 +120,64 @@ async def get_all_users():
 
 async def setup_database():
     print("Dᴀᴛᴀʙᴀsᴇ Cᴏɴɴᴇᴄᴛᴇᴅ ✅")
+
+# ---------------- MULTIPLE FORCE SUB ---------------- #
+
+async def get_force_sub_channels():
+
+    data = await settings.find_one(
+        {"_id": "force_sub"}
+    )
+
+    if not data:
+        return []
+
+    channels = data.get("channels", [])
+
+    if not isinstance(channels, list):
+        return []
+
+    return channels
+    
+async def add_force_sub_channel(channel):
+
+    await settings.update_one(
+        {"_id": "force_sub"},
+        {
+            "$addToSet": {
+                "channels": channel
+            }
+        },
+        upsert=True
+    )
+
+    return True
+
+
+async def remove_force_sub_channel(channel):
+
+    await settings.update_one(
+        {"_id": "force_sub"},
+        {
+            "$pull": {
+                "channels": channel
+            }
+        }
+    )
+
+    return True
+
+async def clear_force_sub_channels():
+
+    await settings.delete_one(
+        {"_id": "force_sub"}
+    )
+
+
+# ------------------------- #
+# Don't Remove Credit
+# Owner @Mr_Mohammed_29
+# ------------------------- #
 
 # ---------------- USER BOTS SYSTEM ---------------- #
 
