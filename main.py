@@ -65,7 +65,7 @@ def get_memory():
     process = psutil.Process(os.getpid())
     mem = process.memory_info().rss / (1024 * 1024)
     return f"{mem:.2f} MB"
-    
+
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
@@ -97,6 +97,9 @@ FORCE_SUB_CHANNELS = []
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
+
+START_IMAGE = "https://graph.org/file/06077b7730c6e7c8edfe0-5d29472cf04266426a.jpg"
+
 
 download_last_edit = 0
 upload_last_edit = 0
@@ -138,7 +141,7 @@ def parse_duration(value: str):
         return int(value[:-1]) * 31536000
 
     return None
-    
+
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
@@ -425,7 +428,7 @@ async def check_force_sub(client, user_id):
 
     # User joined ALL channels
     return True
-        
+
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
@@ -545,7 +548,7 @@ async def remove_fsub(client, message):
     await message.reply_text(
         "✅ Aʟʟ Fᴏʀᴄᴇ Sᴜʙ Cʜᴀɴɴᴇʟs Rᴇᴍᴏᴠᴇᴅ."
     )
-    
+
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
@@ -611,7 +614,7 @@ async def start(client, message):
                         url=f"https://t.me/{username}"
                     )
                 ])
-        
+
 
             return await message.reply_text(
                 "›› ‼️ ʟᴏᴏᴋs ʟɪᴋᴇ ʏᴏᴜ ʜᴀᴠᴇɴ'ᴛ ᴊᴏɪɴᴇᴅ ᴛᴏ ᴀʟʟ ᴏᴜʀ ᴄʜᴀɴɴᴇʟs ʏᴇᴛ.\n\n"
@@ -667,8 +670,9 @@ async def start(client, message):
 
         # ---------------- MAIN MESSAGE ----------------
         try:
-            start_msg = await message.reply_text(
-                get_home_text(user),
+            start_msg = await message.reply_photo(
+                photo=START_IMAGE,
+                caption=get_home_text(user),
                 reply_markup=get_home_buttons(),
                 parse_mode=ParseMode.HTML
             )
@@ -682,7 +686,7 @@ async def start(client, message):
             )
     except Exception as e:
         print("START ERROR:", e)
-        
+
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
@@ -818,7 +822,7 @@ async def del_prefix(_, msg):
 
     await set_user(msg.from_user.id, {"prefix": ""})
     await msg.reply("Pʀᴇғɪx Dᴇʟᴇᴛᴇᴅ Sᴜᴄᴄᴇssғᴜʟʟʏ ⚡️")
-    
+
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
@@ -1190,7 +1194,7 @@ async def add_bot(_, msg):
         },
         upsert=True
     )
-    
+
     upload_bots[user_id] = token
 
     await msg.reply(
@@ -1353,7 +1357,7 @@ async def choose(_, msg):
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
-        
+
 #---------- Cancel ------------#
 
 @bot.on_message(filters.command("cancel"))
@@ -1441,7 +1445,7 @@ async def update_stats(file_size):
 # ------------------------- #
 
 # ----------- RENAMED COMMAND ---------- #
-    
+
 @bot.on_message(filters.command("renamed"))
 async def renamed(_, msg):
 
@@ -2071,7 +2075,7 @@ async def cb(_, query: CallbackQuery):
 
             # remove memory
             upload_bots.pop(user_id, None)
-  
+
             # reset mode
             upload_modes[user_id] = "main"
 
@@ -2128,12 +2132,12 @@ async def cb(_, query: CallbackQuery):
 
             await query.message.edit_text("𝗣𝗿𝗼𝗰𝗲𝘀𝘀 𝗖𝗮𝗻𝗰𝗲𝗹𝗹𝗲𝗱")
             return
-            
+
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
-        
+
      # ----------- Callback -------------- #
 
         elif data in ["file", "video"]:
@@ -2190,10 +2194,10 @@ async def cb(_, query: CallbackQuery):
 
                 last_edit = now
                 percent, speed, eta = calc_progress(current, total, start_time)
-                
+
                 if current >= total:
                     percent = 100
-    
+
                 filled = int(percent / 10)
                 bar = "⬢" * filled + "⬡" * (10 - filled)
 
@@ -2235,7 +2239,7 @@ async def cb(_, query: CallbackQuery):
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
-            
+
             # -------- NORMAL RENAME -------- #
 
             final_name = caption if caption else file.file_name
@@ -2267,7 +2271,7 @@ async def cb(_, query: CallbackQuery):
 
             else:
                 final = file_path
- 
+
 
             if not os.path.exists(final) or os.path.getsize(final) < 100000:
                 final = file_path
@@ -2276,7 +2280,7 @@ async def cb(_, query: CallbackQuery):
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
-            
+
             # -------- FIX REAL FILE NAME -------- #
 
             fixed_file = new_name
@@ -2291,7 +2295,7 @@ async def cb(_, query: CallbackQuery):
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
-            
+
         # -------- THUMB FIX -------- #
             thumb_path = None
             try:
@@ -2308,12 +2312,12 @@ async def cb(_, query: CallbackQuery):
 
             if not thumb_path or not os.path.exists(thumb_path):
                 thumb_path = None
-                
+
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
-            
+
         # -------- UPLOAD START -------- #
             await progress_msg.edit_text(
                 "<blockquote>📤 <b>Uᴘʟᴏᴀᴅɪɴɢ sᴛᴀʀᴛᴇᴅ...</b></blockquote>",
@@ -2368,12 +2372,12 @@ async def cb(_, query: CallbackQuery):
                     )
                 except:
                     pass
-                    
+
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
-            
+
             # -------- SELECT UPLOAD CLIENT -------- #
 
             upload_client = bot
@@ -2400,14 +2404,14 @@ async def cb(_, query: CallbackQuery):
 
                 except Exception as e:
                     print("ᴘᴇʀsᴏɴᴀʟ ʙᴏᴛ ᴇʀʀᴏʀ:", e)
-                    
+
                     upload_client = bot
-                    
+
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
-            
+
            # -------- SEND FILE -------- #
             file_size = 0
 
@@ -2475,12 +2479,12 @@ async def cb(_, query: CallbackQuery):
 
                         except Exception as e:
                             print("Dᴜᴍᴘ Eʀʀᴏʀ:", e)
-                            
+
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
-                
+
                # -------- DOCUMENT MODE -------- #
                 else:
 
@@ -2552,19 +2556,19 @@ async def cb(_, query: CallbackQuery):
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
-                
+
                 # -------- FILE SIZE -------- #
                 file_size = 0
                 try:
                     file_size = os.path.getsize(final)
                 except:
                     pass
-                    
+
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
-                
+
                 # -------- CLEANUP -------- #
 
                 try:
@@ -2580,12 +2584,12 @@ async def cb(_, query: CallbackQuery):
                         os.remove(thumb_path)
                 except Exception:
                     pass
-                    
+
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
-            
+
             # -------- STATS COUNTER -------- #
 
             await update_stats(file_size)
@@ -2820,7 +2824,7 @@ print("✅ FORCE SUB CONFIG LOADED")
 # ---------------- BOT START ---------------- #
 
 bot.run()
-    
+
 # ------------------------- #
 # Don't Remove Credit 
 # Ask Doubt @AU_Bot_Discussion 
