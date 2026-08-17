@@ -18,7 +18,7 @@ import datetime
 # ------------------------- #
 
 from PIL import Image
-from pyrogram import Client, filters
+from pyrogram import Client, filters, idle
 from pyrogram.enums import ParseMode
 from pyrogram.enums import ChatMemberStatus
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
@@ -27,7 +27,6 @@ from database import *
 from utils import progress_bar
 from ffmpeg_utils import add_metadata
 from keep_alive import keep_alive
-
 
 # ------------------------- #
 # Don't Remove Credit 
@@ -92,7 +91,7 @@ MAX_FILE_SIZE = 2097152000  # 2GB
 # Owner @Mr_Mohammed_29
 # ------------------------- #
 
-FORCE_SUB_CHANNEL = None
+FORCE_SUB_CHANNELS = []
 
 # ------------------------- #
 # Don't Remove Credit 
@@ -399,88 +398,198 @@ register_tools(bot)
 
 async def check_force_sub(client, user_id):
 
-    # If no force sub enabled
-    if not FORCE_SUB_CHANNEL:
+    global FORCE_SUB_CHANNELS
+
+    # No force-sub channels
+    if not FORCE_SUB_CHANNELS:
         return True
 
-    try:
-        member = await client.get_chat_member(
-            FORCE_SUB_CHANNEL,
-            user_id
-        )
+    for channel in FORCE_SUB_CHANNELS:
 
-        # User joined
-        if member.status in [
-            ChatMemberStatus.MEMBER,
-            ChatMemberStatus.ADMINISTRATOR,
-            ChatMemberStatus.OWNER
-        ]:
-            return True
+        try:
+            member = await client.get_chat_member(
+                channel,
+                user_id
+            )
 
-        return False
+            if member.status not in [
+                ChatMemberStatus.MEMBER,
+                ChatMemberStatus.ADMINISTRATOR,
+                ChatMemberStatus.OWNER
+            ]:
+                return False
 
-    except Exception as e:
-        print("FORCE SUB ERROR:", e)
-        return False
+        except Exception as e:
+            print(f"FORCE SUB ERROR [{channel}]:", e)
+            return False
 
+    # User joined ALL channels
+    return True
+        
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
 
-# ---------------- FORCE SUB COMMANDS ---------------- #
+# ---------------- LOAD FORCE SUB ---------------- #
+
+async def load_force_sub():
+
+    global FORCE_SUB_CHANNELS
+
+    data = await db.settings.find_one(
+        {"_id": "force_sub"}
+    )
+
+    if data:
+
+        channels = data.get("channels", [])
+
+        if isinstance(channels, str):
+            channels = [channels]
+
+        FORCE_SUB_CHANNELS = channels
+
+        print(
+            f"✅ FORCE SUB LOADED: {FORCE_SUB_CHANNELS}"
+        )
+
+    else:
+
+        FORCE_SUB_CHANNELS = []
+
+        print("ℹ️ FORCE SUB NOT ENABLED")
+
+# ---------------- ADD FORCE SUB CHANNEL ---------------- #
 
 @bot.on_message(filters.private & filters.command("fsub"))
 async def add_fsub(client, message):
 
-    global FORCE_SUB_CHANNEL
+    global FORCE_SUB_CHANNELS
 
     if message.from_user.id not in ADMINS:
         return
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "ᴛᴇxᴛ ᴡɪᴛʜ\n/fsub Cʜᴀɴɴᴇʟ_Usᴇʀɴᴀᴍᴇ"
+            "❌ Usage:\n\n"
+            "/fsub @ChannelUsername"
         )
 
-    channel = message.command[1]
+    channel = message.command[1].strip()
 
     if not channel.startswith("@"):
         channel = "@" + channel
 
-    FORCE_SUB_CHANNEL = channel
+    # Check channel exists
+    try:
+        await client.get_chat(channel)
+
+    except Exception as e:
+
+        return await message.reply_text(
+            f"❌ Cʜᴀɴɴᴇʟ Nᴏᴛ Fᴏᴜɴᴅ.\n\n"
+            f"{e}"
+        )
+
+    # Don't add duplicate
+    if channel in FORCE_SUB_CHANNELS:
+
+        return await message.reply_text(
+            f"⚠️ This channel is already in Force Sub:\n\n"
+            f"📢 {channel}"
+        )
+
+    # Add channel
+    FORCE_SUB_CHANNELS.append(channel)
+
+    # Save permanently in MongoDB
+    await db.settings.update_one(
+        {"_id": "force_sub"},
+        {
+            "$set": {
+                "channels": FORCE_SUB_CHANNELS
+            }
+        },
+        upsert=True
+    )
 
     await message.reply_text(
-        f"✅ Fᴏʀᴄᴇ Sᴜʙsᴄʀɪʙᴇᴅ Cʜᴀɴɴᴇʟ Aᴅᴅᴇᴅ\n\nCʜᴀɴɴᴇʟ : {channel}"
+        f"✅ Fᴏʀᴄᴇ Sᴜʙ Cʜᴀɴɴᴇʟ Aᴅᴅᴇᴅ\n\n"
+        f"📢 Cʜᴀɴɴᴇʟ: {channel}\n\n"
+        f"📊 Tᴏᴛᴀʟ Cʜᴀɴɴᴇʟs: "
+        f"{len(FORCE_SUB_CHANNELS)}"
     )
 
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
+
+# ---------------- REMOVE ALL FORCE SUB ---------------- #
 
 @bot.on_message(filters.private & filters.command("nofsub"))
 async def remove_fsub(client, message):
 
-    global FORCE_SUB_CHANNEL
+    global FORCE_SUB_CHANNELS
 
     if message.from_user.id not in ADMINS:
         return
 
-    FORCE_SUB_CHANNEL = None
-
-    await message.reply_text(
-        "✅ Fᴏʀᴄᴇ Sᴜʙsᴄʀɪʙᴇᴅ Cʜᴀɴɴᴇʟ Rᴇᴍᴏᴠᴇᴅ"
+    await db.settings.delete_one(
+        {"_id": "force_sub"}
     )
 
+    FORCE_SUB_CHANNELS = []
+
+    await message.reply_text(
+        "✅ Aʟʟ Fᴏʀᴄᴇ Sᴜʙ Cʜᴀɴɴᴇʟs Rᴇᴍᴏᴠᴇᴅ."
+    )
+    
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
 
+# ---------------- LIST FORCE SUB CHANNELS ---------------- #
+
+@bot.on_message(filters.private & filters.command("fsubs"))
+async def list_fsub(client, message):
+
+    if message.from_user.id not in ADMINS:
+        return
+
+    if not FORCE_SUB_CHANNELS:
+
+        return await message.reply_text(
+            "ℹ️ Nᴏ Fᴏʀᴄᴇ Sᴜʙ Cʜᴀɴɴᴇʟs Aᴅᴅᴇᴅ."
+        )
+
+    text = "📢 <b>Fᴏʀᴄᴇ Sᴜʙ Cʜᴀɴɴᴇʟs</b>\n\n"
+
+    for i, channel in enumerate(
+        FORCE_SUB_CHANNELS,
+        start=1
+    ):
+        text += f"{i}. {channel}\n"
+
+    text += (
+        f"\n📊 <b>Tᴏᴛᴀʟ:</b> "
+        f"{len(FORCE_SUB_CHANNELS)}"
+    )
+
+    await message.reply_text(
+        text,
+        parse_mode=ParseMode.HTML
+    )
+
 # ---------------- START ----------------
 @bot.on_message(filters.command("start"))
 async def start(client, message):
+
+    global FORCE_SUB_CHANNELS
+
+    FORCE_SUB_CHANNELS = await get_force_sub_channels()
 
     # ---------------- FORCE SUB CHECK ---------------- #
 
@@ -489,19 +598,26 @@ async def start(client, message):
         joined = await check_force_sub(client, message.from_user.id)
 
         if joined is False:
-           buttons = InlineKeyboardMarkup([
-               [
-                   InlineKeyboardButton(
-                       "● Jᴏɪɴ Nᴏᴡ ●",
-                       url=f"https://t.me/{FORCE_SUB_CHANNEL.replace('@', '')}"
-                   )
-               ]
-           ])
 
-           return await message.reply_text(
-               "›› ‼️ ʟᴏᴏᴋs ʟɪᴋᴇ ʏᴏᴜ ʜᴀᴠᴇɴ'ᴛ ᴊᴏɪɴᴇᴅ ᴛᴏ ᴏᴜʀ ᴄʜᴀɴɴᴇʟ ʏᴇᴛ, sᴜʙsᴄʀɪʙᴇ ɴᴏw.",
-               reply_markup=buttons
-           )
+            buttons = []
+
+            for channel in FORCE_SUB_CHANNELS:
+
+                username = channel.replace("@", "")
+
+                buttons.append([
+                    InlineKeyboardButton(
+                        f"● Jᴏɪɴ {channel} ●",
+                        url=f"https://t.me/{username}"
+                    )
+                ])
+        
+
+            return await message.reply_text(
+                "›› ‼️ ʟᴏᴏᴋs ʟɪᴋᴇ ʏᴏᴜ ʜᴀᴠᴇɴ'ᴛ ᴊᴏɪɴᴇᴅ ᴛᴏ ᴀʟʟ ᴏᴜʀ ᴄʜᴀɴɴᴇʟs ʏᴇᴛ.\n\n"
+                "📢 Pʟᴇᴀsᴇ Jᴏɪɴ Aʟʟ Cʜᴀɴɴᴇʟs Tᴏ Cᴏɴᴛɪɴᴜᴇ.",
+                reply_markup=InlineKeyboardMarkup(buttons)
+            )
 
     try:
         if await is_banned(message.from_user.id):
@@ -2687,20 +2803,24 @@ async def alive(client, message):
 # Owner @Mr_Mohammed_29
 # ------------------------- #
 
-# ---------------- RUN ----------------
+# ---------------- RUN ---------------- #
 
 keep_alive()
+
 print("""
-
 ╭──────────────────────╮
-│  ᴍᴏʜᴀᴍᴍᴇᴅᴅᴇv-ʏᴛ          │
-│  ʀᴇɴᴀᴍᴇ ʙᴏᴛ 2ɢʙ          │
+│  ᴍᴏʜᴀᴍᴍᴇᴅᴅᴇv-ʏᴛ    │
+│  ʀᴇɴᴀᴍᴇ ʙᴏᴛ 2ɢʙ     │
 ╰──────────────────────╯
-
 """)
 
-bot.run()
+print("✅ BOT STARTED")
+print("✅ FORCE SUB CONFIG LOADED")
 
+# ---------------- BOT START ---------------- #
+
+bot.run()
+    
 # ------------------------- #
 # Don't Remove Credit 
 # Ask Doubt @AU_Bot_Discussion 
