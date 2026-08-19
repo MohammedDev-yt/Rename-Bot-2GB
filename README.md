@@ -4,6 +4,13 @@
 
 
 <p align="center">
+  <a href="https://github.com/Shineii86/AniNewsAPI/stargazers"><img src="https://img.shields.io/github/stars/Shineii86/AniNewsAPI?style=for-the-badge&logo=github&color=f43f8e&logoColor=white" alt="Stars"/></a>
+  <a href="https://github.com/Shineii86/AniNewsAPI/network/members"><img src="https://img.shields.io/github/forks/Shineii86/AniNewsAPI?style=for-the-badge&logo=github&color=a855f7&logoColor=white" alt="Forks"/></a>
+  <a href="https://github.com/Shineii86/AniNewsAPI/issues"><img src="https://img.shields.io/github/issues/Shineii86/AniNewsAPI?style=for-the-badge&logo=github&color=7c3aed&logoColor=white" alt="Issues"/></a>
+  <a href="https://github.com/Shineii86/AniNewsAPI/pulls"><img src="https://img.shields.io/github/issues-pr/Shineii86/AniNewsAPI?style=for-the-badge&logo=github&color=ec4899&logoColor=white" alt="Pull Requests"/></a>
+  <a href="https://github.com/Shineii86/AniNewsAPI/commits"><img src="https://img.shields.io/github/last-commit/Shineii86/AniNewsAPI?style=for-the-badge&logo=github&color=6366f1&logoColor=white" alt="Last Commit"/></a>
+  <a href="https://github.com/Shineii86/AniNewsAPI/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Shineii86/AniNewsAPI?style=for-the-badge&logo=mit&color=22c55e&logoColor=white" alt="License"/></a>
+
   <a href="https://www.python.org/" target="_blank">
     <img src="https://img.shields.io/badge/Python-3.11-blue?style=for-the-badge&logo=python&logoColor=white" alt="Python 3"/>
   </a>
