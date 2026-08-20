@@ -7,6 +7,7 @@
 import os
 import re
 import time
+import html
 import asyncio
 import ffmpeg
 import psutil
@@ -150,14 +151,14 @@ def parse_duration(value: str):
 def get_home_text(user):
     return (
         f"<blockquote>"
-        f"Hᴇʏ {user.mention} ♡\n\n"
-        f"Wᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴍᴏꜱᴛ ᴀᴅᴠᴀɴᴄᴇᴅ Jɪɴᴡᴏᴏ Sᴜɴɢ Rᴇɴᴀᴍᴇ Bᴏᴛ!\n\n"
-        f"» ᴡɪᴛʜ ᴍʏ ᴘᴏᴡᴇʀꜰᴜʟ ꜰᴇᴀᴛᴜʀᴇꜱ, ʏᴏᴜ ᴄᴀɴ:\n"
-        f"○ Aᴅᴅ ᴄᴜsᴛᴏᴍ ᴄᴀᴘᴛɪᴏɴ ᴀɴᴅ ᴛʜᴜᴍʙɴᴀɪʟ\n"
-        f"○ ᴀɴᴅ ᴀʟsᴏ ᴄᴀɴ sᴇᴛ ᴘʀᴇғɪx ᴀɴᴅ sᴜғғɪx ᴏɴ ʏᴏᴜʀ ғɪʟᴇs.⚡️\n\n"
-        f"๏ ᴄʟɪᴄᴋ ᴏɴ ᴛʜᴇ ʜᴏᴡ ᴛᴏ ᴜsᴇ ʙᴜᴛᴛᴏɴ ᴛᴏ ɢᴇᴛ ɪɴғᴏʀᴍᴀᴛɪᴏɴ ᴀʙᴏᴜᴛ ᴍʏ ᴄᴏᴍᴍᴀɴᴅs..\n\n"
-        f"›› ᴛʜɪs ʙᴏᴛ ɪs ᴅᴇᴘʟᴏʏᴇᴅ ʙʏ: "
-        f"<a href='https://t.me/Mr_Mohammed_29'>ᴍᴏʜᴀᴍᴍᴇᴅ</a>"
+        f"<b>Hᴇʏ {user.mention} ♡</b>\n\n"
+        f"<b>Wᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴍᴏꜱᴛ ᴀᴅᴠᴀɴᴄᴇᴅ Jɪɴᴡᴏᴏ Sᴜɴɢ Rᴇɴᴀᴍᴇ Bᴏᴛ!</b>\n\n"
+        f"<b>» ᴡɪᴛʜ ᴍʏ ᴘᴏᴡᴇʀꜰᴜʟ ꜰᴇᴀᴛᴜʀᴇꜱ, ʏᴏᴜ ᴄᴀɴ</b>\n"
+        f"<b>○ Aᴅᴅ ᴄᴜsᴛᴏᴍ ᴄᴀᴘᴛɪᴏɴ ᴀɴᴅ ᴛʜᴜᴍʙɴᴀɪʟ</b>\n"
+        f"<b>○ ᴀɴᴅ ᴀʟsᴏ ᴄᴀɴ sᴇᴛ ᴘʀᴇғɪx ᴀɴᴅ sᴜғғɪx ᴏɴ ʏᴏᴜʀ ғɪʟᴇs</b>\n\n"
+        f"<b>๏ ᴄʟɪᴄᴋ ᴏɴ ᴛʜᴇ below ʙᴜᴛᴛᴏɴ ᴛᴏ ɢᴇᴛ ɪɴғᴏʀᴍᴀᴛɪᴏɴ ᴀʙᴏᴜᴛ ᴍʏ ᴄᴏᴍᴍᴀɴᴅs..</b>\n\n"
+        f"<b>›› ᴛʜɪs ʙᴏᴛ ɪs ᴅᴇᴘʟᴏʏᴇᴅ ʙʏ: </b> "
+        f"<b><a href='https://t.me/Mr_Mohammed_29'>ᴍᴏʜᴀᴍᴍᴇᴅ</a></b>"
         f"</blockquote>"
     )
 
@@ -176,11 +177,11 @@ def get_home_buttons():
         [InlineKeyboardButton("• ᴍʏ ᴀʟʟ ᴄᴏᴍᴍᴀɴᴅs •", callback_data='help')],
         [
             InlineKeyboardButton('• ᴜᴘᴅᴀᴛᴇs •', url=update_url),
-            InlineKeyboardButton('• Bʟᴇᴀᴄʜ •', url="https://t.me/AU_Bleach")
+            InlineKeyboardButton('• Sᴜᴘᴘᴏʀᴛ •', url="https://t.me/Coders_Grp")
         ],
         [
             InlineKeyboardButton('• ᴀʙᴏᴜᴛ •', callback_data='about'),
-            InlineKeyboardButton('• sᴏᴜʀᴄᴇ •', callback_data='source')
+            InlineKeyboardButton('• Rᴇᴘᴏ •', callback_data='source')
         ]
     ])
 
@@ -475,7 +476,7 @@ async def add_fsub(client, message):
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "❌ Usage:\n\n"
+            "! Usage:\n\n"
             "/fsub @ChannelUsername"
         )
 
@@ -499,8 +500,8 @@ async def add_fsub(client, message):
     if channel in FORCE_SUB_CHANNELS:
 
         return await message.reply_text(
-            f"⚠️ This channel is already in Force Sub:\n\n"
-            f"📢 {channel}"
+            f"‼️ This channel is already in Force Sub:\n\n"
+            f"<b>Cʜᴀɴɴᴇʟ : {channel}</b>"
         )
 
     # Add channel
@@ -518,11 +519,20 @@ async def add_fsub(client, message):
     )
 
     await message.reply_text(
-        f"✅ Fᴏʀᴄᴇ Sᴜʙ Cʜᴀɴɴᴇʟ Aᴅᴅᴇᴅ\n\n"
-        f"📢 Cʜᴀɴɴᴇʟ: {channel}\n\n"
-        f"📊 Tᴏᴛᴀʟ Cʜᴀɴɴᴇʟs: "
-        f"{len(FORCE_SUB_CHANNELS)}"
+        f"<b>✅ Fᴏʀᴄᴇ Sᴜʙ Cʜᴀɴɴᴇʟ Aᴅᴅᴇᴅ</b>\n\n"
+        f"<b>📢 Cʜᴀɴɴᴇʟ: {channel}</b>\n\n"
+        f"<b>📊 Tᴏᴛᴀʟ Cʜᴀɴɴᴇʟs: </b>"
+        f"<b>{len(FORCE_SUB_CHANNELS)}</b>"
     )
+    buttons = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(
+                "• Cʟᴏsᴇ •",
+                callback_data="close"
+            )
+        ]
+    ])
+
 
 # ------------------------- #
 # Don't Remove Credit 
@@ -556,14 +566,17 @@ async def remove_fsub(client, message):
 
 # ---------------- LIST FORCE SUB CHANNELS ---------------- #
 
-@bot.on_message(filters.private & filters.command("fsubs"))
+FSUBS_IMAGE = "https://graph.org/file/8df06c3b45b20fe832246-88ae44a8e3b1ecffc0.jpg"
+
+@bot.on_message(
+    filters.private & filters.command("fsubs")
+)
 async def list_fsub(client, message):
 
     if message.from_user.id not in ADMINS:
         return
 
     if not FORCE_SUB_CHANNELS:
-
         return await message.reply_text(
             "ℹ️ Nᴏ Fᴏʀᴄᴇ Sᴜʙ Cʜᴀɴɴᴇʟs Aᴅᴅᴇᴅ."
         )
@@ -574,16 +587,27 @@ async def list_fsub(client, message):
         FORCE_SUB_CHANNELS,
         start=1
     ):
-        text += f"{i}. {channel}\n"
+        text += f"<b>{i}.Cʜᴀɴɴᴇʟ Nᴀᴍᴇ : {channel}</b>\n"
 
     text += (
-        f"\n📊 <b>Tᴏᴛᴀʟ:</b> "
-        f"{len(FORCE_SUB_CHANNELS)}"
+        f"\n📊 <b>Tᴏᴛᴀʟ Cʜᴀɴɴᴇʟs Aᴅᴅᴇᴅ :</b> "
+        f"<b>{len(FORCE_SUB_CHANNELS)}</b>"
     )
 
-    await message.reply_text(
-        text,
-        parse_mode=ParseMode.HTML
+    buttons = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(
+                "• Cʟᴏsᴇ •",
+                callback_data="close"
+            )
+        ]
+    ])
+
+    await message.reply_photo(
+        photo=FSUBS_IMAGE,
+        caption=text,
+        parse_mode=ParseMode.HTML,
+        reply_markup=buttons
     )
 
 # ---------------- START ----------------
@@ -617,8 +641,8 @@ async def start(client, message):
 
 
             return await message.reply_text(
-                "›› ‼️ ʟᴏᴏᴋs ʟɪᴋᴇ ʏᴏᴜ ʜᴀᴠᴇɴ'ᴛ ᴊᴏɪɴᴇᴅ ᴛᴏ ᴀʟʟ ᴏᴜʀ ᴄʜᴀɴɴᴇʟs ʏᴇᴛ.\n\n"
-                "📢 Pʟᴇᴀsᴇ Jᴏɪɴ Aʟʟ Cʜᴀɴɴᴇʟs Tᴏ Cᴏɴᴛɪɴᴜᴇ.",
+                "<b>›› ‼️ ʟᴏᴏᴋs ʟɪᴋᴇ ʏᴏᴜ ʜᴀᴠᴇɴ'ᴛ ᴊᴏɪɴᴇᴅ ᴛᴏ ᴀʟʟ ᴏᴜʀ ᴄʜᴀɴɴᴇʟs ʏᴇᴛ.</b>\n\n"
+                "<b>‼️ Pʟᴇᴀsᴇ Jᴏɪɴ Aʟʟ Cʜᴀɴɴᴇʟs Tᴏ Cᴏɴᴛɪɴᴜᴇ.</b>",
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
 
@@ -658,7 +682,7 @@ async def start(client, message):
         try:
             m = await message.reply_text("Sʜᴀᴅᴏᴡ Oғ Mᴏɴᴀʀᴄʜ. . .")
             await asyncio.sleep(0.5)
-            await m.edit_text("🎊")
+            await m.edit_text("🔥")
             await asyncio.sleep(0.5)
             await m.edit_text("⚡")
             await asyncio.sleep(0.5)
@@ -886,8 +910,8 @@ async def metadata(_, msg):
 
     buttons = InlineKeyboardMarkup([
         [
-        InlineKeyboardButton("Hᴏᴍᴇ", callback_data="home"),
-        InlineKeyboardButton("Cʟᴏsᴇ", callback_data="close")
+        InlineKeyboardButton("• Hᴏᴍᴇ •", callback_data="home"),
+        InlineKeyboardButton("• Cʟᴏsᴇ •", callback_data="close")
         ]
     ])
 
@@ -1198,7 +1222,8 @@ async def add_bot(_, msg):
     upload_bots[user_id] = token
 
     await msg.reply(
-        f"✅️ Pᴇʀsᴏɴᴀʟ Uᴘʟᴏᴀᴅ Bᴏᴛ Sᴀᴠᴇᴅ\n\n🤖 @{me.username}"
+        f"<b>✅️ Pᴇʀsᴏɴᴀʟ Uᴘʟᴏᴀᴅ Bᴏᴛ Sᴀᴠᴇᴅ</b>\n\n"
+        f"<b>🤖 Bᴏᴛ :  @{me.username}</b>"
     )
 
 # ------------------------- #
@@ -1398,7 +1423,7 @@ async def status(_, msg):
 """
 
     buttons = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🔄 Rᴇғʀᴇsʜ", callback_data="status_refresh")]
+        [InlineKeyboardButton("• Rᴇғʀᴇsʜ •", callback_data="status_refresh")]
     ])
 
     await msg.reply_text(text, reply_markup=buttons)
@@ -1597,7 +1622,7 @@ async def addedbots(_, msg):
         return await msg.reply_text("❌ ɴᴏ ʙᴏᴛs ᴀᴅᴅᴇᴅ ʏᴇᴛ.")
 
     total_uploads = 0
-    text = "🤖 ᴀᴅᴅᴇᴅ ʙᴏᴛs sᴛᴀᴛᴜs\n\n"
+    text = "<b>🤖 ᴀᴅᴅᴇᴅ ʙᴏᴛs sᴛᴀᴛᴜs</b>\n\n"
 
     for i, bot_data in enumerate(bots):
 
@@ -1776,14 +1801,14 @@ async def cb(_, query: CallbackQuery):
 
         ⍟───[ MY ᴅᴇᴛᴀɪʟꜱ ]───⍟
 
-        Pʀᴏɢʀᴀᴍᴇʀ : <a href="https://t.me/Mr_Mohammed_29">ᴍᴏʜᴀᴍᴍᴇᴅ</a>
-        ꜰᴏᴜɴᴅᴇʀ ᴏꜰ : <a href="https://t.me/Aero_Unity">ᴀᴇʀᴏ ᴜɴɪᴛʏ</a>
-        Lɪʙʀᴀʀʏ : <a href="https://pypi.org/project/Pyrogram/">Pyʀᴏɢʀᴀᴍ 2.0</a>
-        Lᴀɴɢᴜᴀɢᴇ : <a href="https://www.python.org/downloads/">Pʏᴛʜᴏɴ 𝟹</a>
-        Dᴀᴛᴀʙᴀsᴇ : <a href="https://www.mongodb.com/">ᴍᴏɴɢᴏ ᴅʙ</a>
-        ᴄʜᴀɴɴᴇʟ : <a href="https://t.me/Aero_Unity">ᴀᴇʀᴏ ᴜɴɪᴛʏ</a>
-        ᴍʏ ꜱᴇʀᴠᴇʀ : <a href="https://t.me/Mr_Mohammed_29">ʙᴏᴛs sᴇʀᴠᴇʀ</a>
-        ʙᴜɪʟᴅ sᴛᴀᴛᴜs : <a href="https://t.me/Aero_Unity">ᴠ3 [sᴛᴀʙʟᴇ]</a>
+    • <b>Pʀᴏɢʀᴀᴍᴇʀ : <a href="https://t.me/Mr_Mohammed_29">ᴍᴏʜᴀᴍᴍᴇᴅ</a></b>
+    • <b>ꜰᴏᴜɴᴅᴇʀ ᴏꜰ : <a href="https://t.me/Aero_Unity">ᴀᴇʀᴏ ᴜɴɪᴛʏ</a></b>
+    • <b>Lɪʙʀᴀʀʏ : <a href="https://pypi.org/project/Pyrogram/">Pyʀᴏɢʀᴀᴍ 2.0</a></b>
+    • <b>Lᴀɴɢᴜᴀɢᴇ : <a href="https://www.python.org/downloads/">Pʏᴛʜᴏɴ 𝟹</a></b>
+    • <b>Dᴀᴛᴀʙᴀsᴇ : <a href="https://www.mongodb.com/">ᴍᴏɴɢᴏ ᴅʙ</a></b>
+    • <b>ᴄʜᴀɴɴᴇʟ : <a href="https://t.me/Aero_Unity">ᴀᴇʀᴏ ᴜɴɪᴛʏ</a></b>
+    • <b>ᴍʏ ꜱᴇʀᴠᴇʀ : <a href="https://t.me/Mr_Mohammed_29">ʙᴏᴛs sᴇʀᴠᴇʀ</a></b>
+    • <b>ʙᴜɪʟᴅ sᴛᴀᴛᴜs : <a href="https://t.me/Aero_Unity">ᴠ3 [sᴛᴀʙʟᴇ]</a></b>
         """
 
             await query.message.edit_text(
@@ -1869,7 +1894,7 @@ async def cb(_, query: CallbackQuery):
             await query.message.edit_text(
                 text,
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔄 Refresh", callback_data="status_refresh")]
+            [InlineKeyboardButton("• Refresh •", callback_data="status_refresh")]
                 ])
             )
 
@@ -2108,17 +2133,6 @@ async def cb(_, query: CallbackQuery):
 
             text = await generate_leaderboard(period)
 
-            buttons = InlineKeyboardMarkup([
-                [
-                    InlineKeyboardButton("📅 Tᴏᴅᴀʏ", callback_data="lb_today"),
-                    InlineKeyboardButton("📆 Wᴇᴇᴋʟʏ", callback_data="lb_weekly")
-                ],
-                [
-                    InlineKeyboardButton("🗓 Mᴏɴᴛʜʟʏ", callback_data="lb_monthly"),
-                    InlineKeyboardButton("🏆 Aʟʟ Tɪᴍᴇ", callback_data="lb_alltime")
-                ]
-            ])
-
             await query.message.edit_text(
                 text,
                 reply_markup=buttons
@@ -2169,10 +2183,10 @@ async def cb(_, query: CallbackQuery):
             log_event(f"User {user_id} uploaded file: {file.file_name}")
 
             progress_msg = await query.message.reply_text(
-                "<blockquote>📥 <b>Dᴏᴡɴʟᴏᴀᴅɪɴɢ...</b></blockquote>",
+                "📥 <b>Dᴏᴡɴʟᴏᴀᴅɪɴɢ...</b>",
                 parse_mode=ParseMode.HTML,
                 reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("Cᴀɴᴄᴇʟ", callback_data=f"cancel_{user_id}")]
+                    [InlineKeyboardButton("• Cᴀɴᴄᴇʟ •", callback_data=f"cancel_{user_id}")]
                 ])
             )
 
@@ -2202,13 +2216,11 @@ async def cb(_, query: CallbackQuery):
                 bar = "⬢" * filled + "⬡" * (10 - filled)
 
                 text = (
- f"<blockquote>"
  f"📥 <b>Dᴏᴡɴʟᴏᴀᴅɪɴɢ...</b>\n\n"
  f"{bar}\n\n"
  f"📦 <b>Sɪᴢᴇ:</b> {humanbytes(current)} / {humanbytes(total)}\n"
  f"⚡ <b>Sᴘᴇᴇᴅ:</b> {humanbytes(speed)}/s\n"
  f"⏳ <b>Eᴛᴀ:</b> {time_formatter(eta)}"
- f"</blockquote>"
                 )
 
                 try:
@@ -2320,7 +2332,7 @@ async def cb(_, query: CallbackQuery):
 
         # -------- UPLOAD START -------- #
             await progress_msg.edit_text(
-                "<blockquote>📤 <b>Uᴘʟᴏᴀᴅɪɴɢ sᴛᴀʀᴛᴇᴅ...</b></blockquote>",
+                "📤 <b>Uᴘʟᴏᴀᴅɪɴɢ sᴛᴀʀᴛᴇᴅ...</b>",
                 parse_mode=ParseMode.HTML
             )
 
@@ -2356,13 +2368,11 @@ async def cb(_, query: CallbackQuery):
                 bar = "⬢" * filled + "⬡" * (10 - filled)
 
                 text = (
- f"<blockquote>"
  f"📤 <b>Uᴘʟᴏᴀᴅɪɴɢ...</b>\n\n"
  f"{bar}\n\n"
  f"📦 <b>Sɪᴢᴇ:</b> {humanbytes(current)} / {humanbytes(total)}\n"
  f"⚡ <b>Sᴘᴇᴇᴅ:</b> {humanbytes(speed)}/s\n"
  f"⏳ <b>Eᴛᴀ:</b> {time_formatter(eta)}"
- f"</blockquote>"
                 )
 
                 try:
@@ -2456,8 +2466,6 @@ async def cb(_, query: CallbackQuery):
                         upsert=True
                     )
 
-                    await update_leaderboard(user_id)
-
                     await progress_msg.delete()
 
                     dump_id = dump_channels.get(user_id)
@@ -2521,8 +2529,6 @@ async def cb(_, query: CallbackQuery):
                     )
 
                     await progress_msg.delete()
-
-                    await update_leaderboard(user_id)
 
                     dump_id = dump_channels.get(user_id)
 
@@ -2597,6 +2603,7 @@ async def cb(_, query: CallbackQuery):
             user_files.pop(user_id, None)
 
             await query.message.delete()
+            
             active_tasks.pop(user_id, None)
             user_mode.pop(user_id, None)
 
@@ -2614,33 +2621,99 @@ async def cb(_, query: CallbackQuery):
 
 # ---------------- LEADERBOARD FUNCTION ---------------- #
 
-async def generate_leaderboard(period):
+LEADERBOARD_IMAGE = "https://graph.org/file/fbb898ae83f4eeae6704e-7fa29130ecd30be402.jpg"
 
-    period = period.lower()
+async def generate_leaderboard(user_id):
 
-    cursor = db.leaderboard.find({period: {"$exists": True}}).sort(period, -1).limit(20)
+    cursor = (
+        db.users
+        .find({"renames": {"$gt": 0}})
+        .sort("renames", -1)
+        .limit(10)
+    )
 
-    text = f"📈 Lᴇᴀᴅᴇʀʙᴏᴀʀᴅ: {period.upper()}\n\n"
-    text += "Tᴏᴘ 20 Usᴇʀs:\n\n"
-
-    total_files = 0
+    top_users = []
 
     async for data in cursor:
 
-        uid = data.get("user_id")
-        count = data.get(period, 0)
-
-        total_files += count
+        uid = data.get("_id")
+        renames = data.get("renames", 0)
 
         try:
-            user = await bot.get_users(uid)
-            name = user.first_name[:25]
-        except:
+            tg_user = await bot.get_users(uid)
+
+            name = tg_user.first_name or "Unknown"
+
+            if tg_user.username:
+                username = f"@{tg_user.username}"
+            else:
+                username = "No Username"
+
+        except Exception:
             name = "Unknown"
+            username = "No Username"
 
-        text += f"👤 « {name} » {count}\n"
+        top_users.append({
+            "name": name,
+            "username": username,
+            "renames": renames
+        })
 
-    text += f"\nTᴏᴛᴀʟ Sᴏʀᴛᴇᴅ Fɪʟᴇs: {total_files}"
+    text = "<b>ALL-TIME TOP 10 RENAMERS</b>\n\n"
+
+    if not top_users:
+
+        text += "<b>No renames yet </b>\n"
+
+    else:
+
+        for number, user in enumerate(top_users, 1):
+
+            text += (
+                f"{number}. "
+                f"<b>{user['name']}</b> "
+                f"({user['username']}) ➜ "
+                f"<i>{user['renames']} RENAMES</i>\n"
+            )
+
+    # -------- YOUR STATS -------- #
+
+    current_user = await db.users.find_one(
+        {"_id": user_id}
+    )
+
+    user_renames = (
+        current_user.get("renames", 0)
+        if current_user
+        else 0
+    )
+
+    # -------- YOUR RANK -------- #
+
+    user_rank = (
+        await db.users.count_documents(
+            {
+                "renames": {
+                    "$gt": user_renames
+                }
+            }
+        )
+        + 1
+    )
+
+    # -------- LAST UPDATED -------- #
+
+    last_updated = datetime.datetime.now().strftime(
+        "%Y-%m-%d %H:%M"
+    )
+
+    text += (
+        f"\n<b>Your Rank:</b> "
+        f"{user_rank} "
+        f"with {user_renames} renames\n\n"
+        f"<b><i>Last Updated: {last_updated}</i></b>\n\n"
+        f"<b><i>This message will auto-delete in 30 seconds</i></b>"
+    )
 
     return text
 
@@ -2651,26 +2724,43 @@ async def generate_leaderboard(period):
 
 # ---------------- LEADERBOARD COMMAND ---------------- #
 
-@bot.on_message(filters.private & filters.command("leaderboard"))
+@bot.on_message(
+    filters.private & filters.command("leaderboard")
+)
 async def leaderboard(_, msg):
 
-    text = await generate_leaderboard("today")
+    try:
 
-    buttons = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton("📅 Tᴏᴅᴀʏ", callback_data="lb_today"),
-            InlineKeyboardButton("📆 Wᴇᴇᴋʟʏ", callback_data="lb_weekly")
-        ],
-        [
-            InlineKeyboardButton("🗓 Mᴏɴᴛʜʟʏ", callback_data="lb_monthly"),
-            InlineKeyboardButton("🏆 Aʟʟ Tɪᴍᴇ", callback_data="lb_alltime")
-        ]
-    ])
+        text = await generate_leaderboard(
+            msg.from_user.id
+        )
 
-    await msg.reply_text(
-        text,
-        reply_markup=buttons
-    )
+        sent = await msg.reply_photo(
+            photo=LEADERBOARD_IMAGE,
+            caption=text,
+            parse_mode=ParseMode.HTML
+        )
+
+        # Auto delete after 30 seconds
+        await asyncio.sleep(30)
+
+        try:
+            await sent.delete()
+        except Exception:
+            pass
+
+    except Exception as e:
+
+        print(
+            f"LEADERBOARD ERROR: {e}"
+        )
+
+        try:
+            await msg.reply_text(
+                "❌ Fᴀɪʟᴇᴅ Tᴏ Lᴏᴀᴅ Lᴇᴀᴅᴇʀʙᴏᴀʀᴅ."
+            )
+        except Exception:
+            pass
 
 # ------------------------- #
 # Don't Remove Credit 
@@ -2726,7 +2816,7 @@ async def user_info(_, msg):
     buttons = InlineKeyboardMarkup([
         [
             InlineKeyboardButton(
-                "🌐 Vɪᴇᴡ Pʀᴏғɪʟᴇ",
+                "• Vɪᴇᴡ Pʀᴏғɪʟᴇ •",
                 url=f"https://t.me/{user.username}" if
                 user.username else "https://t.me"
             )
@@ -2749,24 +2839,13 @@ async def user_info(_, msg):
 async def donate(_, msg):
 
     text = """
-💖 Sᴜᴘᴘᴏʀᴛ Tʜᴇ Bᴏᴛ
+<b>ᴛʜᴀɴᴋs ғᴏʀ sʜᴏᴡɪɴɢ ɪɴᴛᴇʀᴇsᴛ ɪɴ ᴅᴏɴᴀᴛɪᴏɴ<b>
 
-Iғ Yᴏᴜ Lɪᴋᴇ Tʜɪs Bᴏᴛ Aɴᴅ Wᴀɴᴛ
-Tᴏ Sᴜᴘᴘᴏʀᴛ Tʜᴇ Dᴇᴠᴇʟᴏᴘᴇʀ,
-Yᴏᴜ Cᴀɴ Dᴏɴᴀᴛᴇ ❤️
+<b>💞  ɪꜰ ʏᴏᴜ ʟɪᴋᴇ ᴏᴜʀ ʙᴏᴛ ꜰᴇᴇʟ ꜰʀᴇᴇ ᴛᴏ ᴅᴏɴᴀᴛᴇ ᴀɴʏ ᴀᴍᴏᴜɴᴛ ₹𝟷𝟶, ₹𝟸𝟶, ₹𝟻𝟶, ₹𝟷𝟶𝟶, ᴇᴛᴄ.</b>
 
-━━━━━━━━━━━━━━━
+<b>ᴅᴏɴᴀᴛɪᴏɴs ᴀʀᴇ ʀᴇᴀʟʟʏ ᴀᴘᴘʀᴇᴄɪᴀᴛᴇᴅ ɪᴛ ʜᴇʟᴘs ɪɴ ʙᴏᴛ ᴅᴇᴠᴇʟᴏᴘᴍᴇɴᴛ</b>
 
-➣ ᴜᴘɪ ɪᴅ:
-<code>mohammed.1006@superyes</code>
-
-➣ ǫʀ ᴄᴏᴅᴇ:
-<a href='https://telegra.ph/file/2197f68092b7161075d2d-34f98b9f2e12216868.jpg'>Click Here</a>
-
-━━━━━━━━━━━━━━━
-
-Aғᴛᴇʀ Pᴀʏᴍᴇɴᴛ Sᴇɴᴅ Sᴄʀᴇᴇɴsʜᴏᴛ
-Tᴏ Dᴇᴠᴇʟᴏᴘᴇʀ
+➣ ᴜᴘɪ ɪᴅ: <b>dm <a href="https://t.me/Mr_Mohammed_29">Mᴏʜᴀᴍᴍᴇᴅ</a></b>
 """
 
     buttons = InlineKeyboardMarkup([
