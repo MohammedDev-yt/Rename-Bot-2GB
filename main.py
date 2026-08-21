@@ -681,6 +681,8 @@ async def start(client, message):
 
     global FORCE_SUB_CHANNELS
 
+    user = message.from_user
+
     FORCE_SUB_CHANNELS = await get_force_sub_channels()
 
     # ---------------- FORCE SUB CHECK ---------------- #
@@ -732,8 +734,6 @@ async def start(client, message):
         await add_user(message.from_user.id)
 
         log_event(f"User started bot: {message.from_user.id}")
-
-        user = message.from_user
 
         if not user:
             return
@@ -813,7 +813,7 @@ async def check_fsub_callback(client, callback_query):
     if not joined:
 
         await callback_query.answer(
-            f"<b>›› ‼️ ʟᴏᴏᴋs ʟɪᴋᴇ ʏᴏᴜ ʜᴀᴠᴇɴ'ᴛ ᴊᴏɪɴᴇᴅ ᴛᴏ ᴏᴜʀ ᴄʜᴀɴɴᴇʟs ʏᴇᴛ!</b>",
+            "›› ‼️ ʟᴏᴏᴋs ʟɪᴋᴇ ʏᴏᴜ ʜᴀᴠᴇɴ'ᴛ ᴊᴏɪɴᴇᴅ ᴛᴏ ᴏᴜʀ ᴄʜᴀɴɴᴇʟs ʏᴇᴛ!",
             show_alert=True
         )
 
@@ -822,7 +822,7 @@ async def check_fsub_callback(client, callback_query):
     # ---------------- SUCCESSFULLY VERIFIED ---------------- #
 
     await callback_query.answer(
-        f"<b>✅️ Sᴜᴄᴄᴇssғᴜʟʟʏ Vᴇʀɪғɪᴇᴅ!</b>",
+        "✅️ Sᴜᴄᴄᴇssғᴜʟʟʏ Vᴇʀɪғɪᴇᴅ!",
         show_alert=True
     )
 
@@ -837,7 +837,122 @@ async def check_fsub_callback(client, callback_query):
 
     # ---------------- SHOW START MESSAGE ---------------- #
 
-    await start(client, callback_query.message)
+    try:
+
+        start_buttons = InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton(
+                    "• Sᴛᴀʀᴛ Bᴏᴛ •",
+                    callback_data="start_bot"
+                )
+            ]
+        ])
+
+        await client.send_message(
+            user_id,
+            (
+                f"<b>✅ Sᴜᴄᴄᴇssғᴜʟʟʏ Vᴇʀɪғɪᴇᴅ!</b>\n\n"
+                f"<b>Hᴇʏ {callback_query.from_user.mention} ♡</b>\n\n"
+                "<b>👇 Cʟɪᴄᴋ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ ᴛᴏ sᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ.</b>"
+            ),
+            parse_mode=ParseMode.HTML,
+            reply_markup=start_buttons
+        )
+
+    except Exception as e:
+        print(
+            f"START MESSAGE ERROR: {e}"
+        )
+
+# ---------------- START BOT BUTTON ---------------- #
+
+@bot.on_callback_query(filters.regex("^start_bot$"))
+async def start_bot_callback(client, callback_query):
+
+    await callback_query.answer(
+        "Fᴇᴛᴄʜɪɴɢ......",
+        show_alert=False
+    )
+
+    try:
+        await callback_query.message.delete()
+    except Exception as e:
+        print(
+            f"START BUTTON DELETE ERROR: {e}"
+        )
+
+    user = callback_query.from_user
+
+    try:
+
+        if await is_banned(user.id):
+            return await client.send_message(
+                user.id,
+                "🚫 Yᴏᴜ Aʀᴇ Bᴀɴɴᴇᴅ."
+            )
+
+        await add_user(user.id)
+
+        log_event(
+            f"User started bot: {user.id}"
+        )
+
+        # ---------------- ANIMATION ---------------- #
+
+        try:
+
+            m = await client.send_message(
+                user.id,
+                "Sʜᴀᴅᴏᴡ Oғ Mᴏɴᴀʀᴄʜ. . ."
+            )
+
+            await asyncio.sleep(0.5)
+            await m.edit_text("🎭")
+
+            await asyncio.sleep(0.5)
+            await m.edit_text("⚡")
+
+            await asyncio.sleep(0.5)
+            await m.edit_text("Jɪɴᴡᴏᴏ Sᴜɴɢ...")
+
+            await asyncio.sleep(0.5)
+            await m.delete()
+
+        except Exception as e:
+            print(
+                f"ANIMATION ERROR: {e}"
+            )
+
+        # ---------------- HOME MESSAGE ---------------- #
+
+        try:
+
+            await client.send_photo(
+                chat_id=user.id,
+                photo=START_IMAGE,
+                caption=get_home_text(user),
+                reply_markup=get_home_buttons(),
+                parse_mode=ParseMode.HTML
+            )
+
+        except Exception as e:
+
+            print(
+                f"HOME UI ERROR: {e}"
+            )
+
+            await client.send_message(
+                chat_id=user.id,
+                text=get_home_text(user),
+                reply_markup=get_home_buttons(),
+                parse_mode=ParseMode.HTML
+            )
+
+    except Exception as e:
+
+        print(
+            f"START BUTTON ERROR: {e}"
+        )
 
 # ------------------------- #
 # Don't Remove Credit 
@@ -2859,9 +2974,27 @@ async def leaderboard(_, msg):
 
     try:
 
+        # ---------------- FETCHING MESSAGE ---------------- #
+
+        fetching = await msg.reply_text(
+            "⏳ <b>Fᴇᴛᴄʜɪɴɢ Lᴇᴀᴅᴇʀʙᴏᴀʀᴅ......</b>",
+            parse_mode=ParseMode.HTML
+        )
+
+        # ---------------- GENERATE LEADERBOARD ---------------- #
+
         text = await generate_leaderboard(
             msg.from_user.id
         )
+
+        # ---------------- DELETE FETCHING ---------------- #
+
+        try:
+            await fetching.delete()
+        except Exception:
+            pass
+
+        # ---------------- SHOW LEADERBOARD ---------------- #
 
         sent = await msg.reply_photo(
             photo=LEADERBOARD_IMAGE,
@@ -2869,7 +3002,8 @@ async def leaderboard(_, msg):
             parse_mode=ParseMode.HTML
         )
 
-        # Auto delete after 30 seconds
+        # ---------------- AUTO DELETE ---------------- #
+
         await asyncio.sleep(30)
 
         try:
