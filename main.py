@@ -404,7 +404,6 @@ async def check_force_sub(client, user_id):
 
     global FORCE_SUB_CHANNELS
 
-    # No force-sub channels
     if not FORCE_SUB_CHANNELS:
         return True
 
@@ -424,16 +423,13 @@ async def check_force_sub(client, user_id):
                 return False
 
         except Exception as e:
-            print(f"FORCE SUB ERROR [{channel}]:", e)
+            print(
+                f"FORCE SUB ERROR [{channel}]: {e}"
+            )
             return False
 
-    # User joined ALL channels
     return True
 
-# ------------------------- #
-# Don't Remove Credit 
-# Owner @Mr_Mohammed_29
-# ------------------------- #
 
 # ---------------- LOAD FORCE SUB ---------------- #
 
@@ -455,18 +451,26 @@ async def load_force_sub():
         FORCE_SUB_CHANNELS = channels
 
         print(
-            f"✅ FORCE SUB LOADED: {FORCE_SUB_CHANNELS}"
+            f"✅ FORCE SUB LOADED: "
+            f"{FORCE_SUB_CHANNELS}"
         )
 
     else:
 
         FORCE_SUB_CHANNELS = []
 
-        print("ℹ️ FORCE SUB NOT ENABLED")
+        print(
+            "ℹ️ FORCE SUB NOT ENABLED"
+        )
 
 # ---------------- ADD FORCE SUB CHANNEL ---------------- #
 
-@bot.on_message(filters.private & filters.command("fsub"))
+FSUB_IMAGE = "https://graph.org/file/8df06c3b45b20fe832246-88ae44a8e3b1ecffc0.jpg"
+
+
+@bot.on_message(
+    filters.private & filters.command("fsub")
+)
 async def add_fsub(client, message):
 
     global FORCE_SUB_CHANNELS
@@ -475,9 +479,11 @@ async def add_fsub(client, message):
         return
 
     if len(message.command) < 2:
+
         return await message.reply_text(
-            "! Usage:\n\n"
-            "/fsub @ChannelUsername"
+            "‼️ <b>Usage:</b>\n\n"
+            "<code>/fsub @ChannelUsername</code>",
+            parse_mode=ParseMode.HTML
         )
 
     channel = message.command[1].strip()
@@ -485,29 +491,58 @@ async def add_fsub(client, message):
     if not channel.startswith("@"):
         channel = "@" + channel
 
-    # Check channel exists
+    # -------- CHECK CHANNEL -------- #
+
     try:
-        await client.get_chat(channel)
+
+        chat = await client.get_chat(channel)
 
     except Exception as e:
 
         return await message.reply_text(
-            f"❌ Cʜᴀɴɴᴇʟ Nᴏᴛ Fᴏᴜɴᴅ.\n\n"
-            f"{e}"
+            f"❌ <b>Cʜᴀɴɴᴇʟ Nᴏᴛ Fᴏᴜɴᴅ</b>\n\n"
+            f"<code>{e}</code>",
+            parse_mode=ParseMode.HTML
         )
 
-    # Don't add duplicate
+    # -------- CHECK BOT ADMIN -------- #
+
+    try:
+
+        member = await client.get_chat_member(
+            chat.id,
+            "me"
+        )
+
+        if member.status not in [
+            ChatMemberStatus.ADMINISTRATOR,
+            ChatMemberStatus.OWNER
+        ]:
+
+            return await message.reply_text(
+                "❌ Bᴏᴛ Mᴜsᴛ Bᴇ Aᴅᴍɪɴ Iɴ Tʜᴇ Cʜᴀɴɴᴇʟ."
+            )
+
+    except Exception as e:
+
+        print("BOT ADMIN CHECK ERROR:", e)
+
+    # -------- DUPLICATE CHECK -------- #
+
     if channel in FORCE_SUB_CHANNELS:
 
         return await message.reply_text(
-            f"‼️ This channel is already in Force Sub:\n\n"
-            f"<b>Cʜᴀɴɴᴇʟ : {channel}</b>"
+            f"‼️ <b>Cʜᴀɴɴᴇʟ Aʟʀᴇᴀᴅʏ Aᴅᴅᴇᴅ</b>\n\n"
+            f"📢 <b>Cʜᴀɴɴᴇʟ:</b> {channel}",
+            parse_mode=ParseMode.HTML
         )
 
-    # Add channel
+    # -------- ADD CHANNEL -------- #
+
     FORCE_SUB_CHANNELS.append(channel)
 
-    # Save permanently in MongoDB
+    # -------- SAVE TO MONGODB -------- #
+
     await db.settings.update_one(
         {"_id": "force_sub"},
         {
@@ -518,12 +553,8 @@ async def add_fsub(client, message):
         upsert=True
     )
 
-    await message.reply_text(
-        f"<b>✅ Fᴏʀᴄᴇ Sᴜʙ Cʜᴀɴɴᴇʟ Aᴅᴅᴇᴅ</b>\n\n"
-        f"<b>📢 Cʜᴀɴɴᴇʟ: {channel}</b>\n\n"
-        f"<b>📊 Tᴏᴛᴀʟ Cʜᴀɴɴᴇʟs: </b>"
-        f"<b>{len(FORCE_SUB_CHANNELS)}</b>"
-    )
+    # -------- CLOSE BUTTON -------- #
+
     buttons = InlineKeyboardMarkup([
         [
             InlineKeyboardButton(
@@ -533,15 +564,29 @@ async def add_fsub(client, message):
         ]
     ])
 
+    # -------- SUCCESS MESSAGE -------- #
+
+    await message.reply_photo(
+        photo=FSUB_IMAGE,
+        caption=(
+            f"<b>✅ Fᴏʀᴄᴇ Sᴜʙ Cʜᴀɴɴᴇʟ Aᴅᴅᴇᴅ</b>\n\n"
+            f"📢 <b>Cʜᴀɴɴᴇʟ:</b> {channel}\n\n"
+            f"📊 <b>Tᴏᴛᴀʟ Cʜᴀɴɴᴇʟs:</b> "
+            f"{len(FORCE_SUB_CHANNELS)}"
+        ),
+        parse_mode=ParseMode.HTML,
+        reply_markup=buttons
+    )
 
 # ------------------------- #
 # Don't Remove Credit 
 # Owner @Mr_Mohammed_29
 # ------------------------- #
-
 # ---------------- REMOVE ALL FORCE SUB ---------------- #
 
-@bot.on_message(filters.private & filters.command("nofsub"))
+@bot.on_message(
+    filters.private & filters.command("nofsub")
+)
 async def remove_fsub(client, message):
 
     global FORCE_SUB_CHANNELS
@@ -555,8 +600,23 @@ async def remove_fsub(client, message):
 
     FORCE_SUB_CHANNELS = []
 
-    await message.reply_text(
-        "✅ Aʟʟ Fᴏʀᴄᴇ Sᴜʙ Cʜᴀɴɴᴇʟs Rᴇᴍᴏᴠᴇᴅ."
+    buttons = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(
+                "• Cʟᴏsᴇ •",
+                callback_data="close"
+            )
+        ]
+    ])
+
+    await message.reply_photo(
+        photo=FSUB_IMAGE,
+        caption=(
+            "✅ <b>Aʟʟ Fᴏʀᴄᴇ Sᴜʙ Cʜᴀɴɴᴇʟs Rᴇᴍᴏᴠᴇᴅ</b>\n\n"
+            "<b>📢 Fᴏʀᴄᴇ Sᴜʙ Iѕ Nᴏᴡ Dɪsᴀʙʟᴇᴅ.</b>"
+        ),
+        parse_mode=ParseMode.HTML,
+        reply_markup=buttons
     )
 
 # ------------------------- #
@@ -565,8 +625,6 @@ async def remove_fsub(client, message):
 # ------------------------- #
 
 # ---------------- LIST FORCE SUB CHANNELS ---------------- #
-
-FSUBS_IMAGE = "https://graph.org/file/8df06c3b45b20fe832246-88ae44a8e3b1ecffc0.jpg"
 
 @bot.on_message(
     filters.private & filters.command("fsubs")
@@ -577,21 +635,28 @@ async def list_fsub(client, message):
         return
 
     if not FORCE_SUB_CHANNELS:
+
         return await message.reply_text(
             "ℹ️ Nᴏ Fᴏʀᴄᴇ Sᴜʙ Cʜᴀɴɴᴇʟs Aᴅᴅᴇᴅ."
         )
 
-    text = "📢 <b>Fᴏʀᴄᴇ Sᴜʙ Cʜᴀɴɴᴇʟs</b>\n\n"
+    text = (
+        "📢 <b>Fᴏʀᴄᴇ Sᴜʙ Cʜᴀɴɴᴇʟs</b>\n\n"
+    )
 
     for i, channel in enumerate(
         FORCE_SUB_CHANNELS,
         start=1
     ):
-        text += f"<b>{i}.Cʜᴀɴɴᴇʟ Nᴀᴍᴇ : {channel}</b>\n"
+
+        text += (
+            f"<b>{i}. Cʜᴀɴɴᴇʟ Nᴀᴍᴇ:</b> "
+            f"<code>{channel}</code>\n"
+        )
 
     text += (
-        f"\n📊 <b>Tᴏᴛᴀʟ Cʜᴀɴɴᴇʟs Aᴅᴅᴇᴅ :</b> "
-        f"<b>{len(FORCE_SUB_CHANNELS)}</b>"
+        f"\n📊 <b>Tᴏᴛᴀʟ Cʜᴀɴɴᴇʟs:</b> "
+        f"{len(FORCE_SUB_CHANNELS)}"
     )
 
     buttons = InlineKeyboardMarkup([
@@ -604,7 +669,7 @@ async def list_fsub(client, message):
     ])
 
     await message.reply_photo(
-        photo=FSUBS_IMAGE,
+        photo=FSUB_IMAGE,
         caption=text,
         parse_mode=ParseMode.HTML,
         reply_markup=buttons
@@ -622,9 +687,12 @@ async def start(client, message):
 
     if message.from_user.id not in ADMINS:
 
-        joined = await check_force_sub(client, message.from_user.id)
+        joined = await check_force_sub(
+            client,
+            message.from_user.id
+        )
 
-        if joined is False:
+        if not joined:
 
             buttons = []
 
@@ -637,12 +705,23 @@ async def start(client, message):
                         f"● Jᴏɪɴ {channel} ●",
                         url=f"https://t.me/{username}"
                     )
-                ])
+               ])
 
+            buttons.append([
+                InlineKeyboardButton(
+                    "• Cʜᴇᴄᴋ Aɢᴀɪɴ •",
+                    callback_data="check_fsub"
+                )
+            ])
 
-            return await message.reply_text(
-                "<b>›› ‼️ ʟᴏᴏᴋs ʟɪᴋᴇ ʏᴏᴜ ʜᴀᴠᴇɴ'ᴛ ᴊᴏɪɴᴇᴅ ᴛᴏ ᴀʟʟ ᴏᴜʀ ᴄʜᴀɴɴᴇʟs ʏᴇᴛ.</b>\n\n"
-                "<b>‼️ Pʟᴇᴀsᴇ Jᴏɪɴ Aʟʟ Cʜᴀɴɴᴇʟs Tᴏ Cᴏɴᴛɪɴᴜᴇ.</b>",
+            return await message.reply_photo(
+                photo=FSUB_IMAGE,
+                caption=(
+                    f"<b>Hᴇʏ {user.mention} ♡</b>\n\n"
+                    f"<b>›› ‼️ ʟᴏᴏᴋs ʟɪᴋᴇ ʏᴏᴜ ʜᴀᴠᴇɴ'ᴛ ᴊᴏɪɴᴇᴅ ᴛᴏ ᴏᴜʀ ᴄʜᴀɴɴᴇʟs ʏᴇᴛ, sᴜʙsᴄʀɪʙᴇ ɴᴏw...</b>\n\n"
+                    f"<b>›› ‼️ Jᴏɪɴ Aʟʟ Cʜᴀɴɴᴇʟs Bᴇʟᴏᴡ 👇</b>"
+                ),
+                parse_mode=ParseMode.HTML,
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
 
@@ -682,7 +761,7 @@ async def start(client, message):
         try:
             m = await message.reply_text("Sʜᴀᴅᴏᴡ Oғ Mᴏɴᴀʀᴄʜ. . .")
             await asyncio.sleep(0.5)
-            await m.edit_text("🔥")
+            await m.edit_text("🎭")
             await asyncio.sleep(0.5)
             await m.edit_text("⚡")
             await asyncio.sleep(0.5)
@@ -710,6 +789,55 @@ async def start(client, message):
             )
     except Exception as e:
         print("START ERROR:", e)
+
+# ---------------- CHECK FORCE SUB CALLBACK ---------------- #
+
+@bot.on_callback_query(filters.regex("^check_fsub$"))
+async def check_fsub_callback(client, callback_query):
+
+    user_id = callback_query.from_user.id
+
+    global FORCE_SUB_CHANNELS
+
+    # Reload latest force-sub channels
+    FORCE_SUB_CHANNELS = await get_force_sub_channels()
+
+    # Check whether user joined all channels
+    joined = await check_force_sub(
+        client,
+        user_id
+    )
+
+    # ---------------- NOT JOINED ---------------- #
+
+    if not joined:
+
+        await callback_query.answer(
+            f"<b>›› ‼️ ʟᴏᴏᴋs ʟɪᴋᴇ ʏᴏᴜ ʜᴀᴠᴇɴ'ᴛ ᴊᴏɪɴᴇᴅ ᴛᴏ ᴏᴜʀ ᴄʜᴀɴɴᴇʟs ʏᴇᴛ!</b>",
+            show_alert=True
+        )
+
+        return
+
+    # ---------------- SUCCESSFULLY VERIFIED ---------------- #
+
+    await callback_query.answer(
+        f"<b>✅️ Sᴜᴄᴄᴇssғᴜʟʟʏ Vᴇʀɪғɪᴇᴅ!</b>",
+        show_alert=True
+    )
+
+    # ---------------- DELETE FORCE SUB MESSAGE ---------------- #
+
+    try:
+        await callback_query.message.delete()
+    except Exception as e:
+        print(
+            f"FORCE SUB MESSAGE DELETE ERROR: {e}"
+        )
+
+    # ---------------- SHOW START MESSAGE ---------------- #
+
+    await start(client, callback_query.message)
 
 # ------------------------- #
 # Don't Remove Credit 
@@ -2835,32 +2963,43 @@ async def user_info(_, msg):
 
 # ---------------- DONATE ---------------- #
 
-@bot.on_message(filters.private & filters.command("donate"))
+DONATE_IMAGE = "https://graph.org/file/2590b3f90fa2b91f80f2b-98594c5f50d2916a5d.jpg"
+
+@bot.on_message(
+    filters.private & filters.command("donate")
+)
 async def donate(_, msg):
 
     text = """
-<b>ᴛʜᴀɴᴋs ғᴏʀ sʜᴏᴡɪɴɢ ɪɴᴛᴇʀᴇsᴛ ɪɴ ᴅᴏɴᴀᴛɪᴏɴ<b>
+<b>ᴛʜᴀɴᴋs ғᴏʀ sʜᴏᴡɪɴɢ ɪɴᴛᴇʀᴇsᴛ ɪɴ ᴅᴏɴᴀᴛɪᴏɴ</b>
 
-<b>💞  ɪꜰ ʏᴏᴜ ʟɪᴋᴇ ᴏᴜʀ ʙᴏᴛ ꜰᴇᴇʟ ꜰʀᴇᴇ ᴛᴏ ᴅᴏɴᴀᴛᴇ ᴀɴʏ ᴀᴍᴏᴜɴᴛ ₹𝟷𝟶, ₹𝟸𝟶, ₹𝟻𝟶, ₹𝟷𝟶𝟶, ᴇᴛᴄ.</b>
+<b>💞 ɪꜰ ʏᴏᴜ ʟɪᴋᴇ ᴏᴜʀ ʙᴏᴛ, ꜰᴇᴇʟ ꜰʀᴇᴇ ᴛᴏ ᴅᴏɴᴀᴛᴇ ᴀɴʏ ᴀᴍᴏᴜɴᴛ ₹𝟷𝟶, ₹𝟸𝟶, ₹𝟻𝟶, ₹𝟷𝟶𝟶, ᴇᴛᴄ.</b>
 
-<b>ᴅᴏɴᴀᴛɪᴏɴs ᴀʀᴇ ʀᴇᴀʟʟʏ ᴀᴘᴘʀᴇᴄɪᴀᴛᴇᴅ ɪᴛ ʜᴇʟᴘs ɪɴ ʙᴏᴛ ᴅᴇᴠᴇʟᴏᴘᴍᴇɴᴛ</b>
+<b>ᴅᴏɴᴀᴛɪᴏɴs ᴀʀᴇ ʀᴇᴀʟʟʏ ᴀᴘᴘʀᴇᴄɪᴀᴛᴇᴅ ❤️</b>
 
-➣ ᴜᴘɪ ɪᴅ: <b>dm <a href="https://t.me/Mr_Mohammed_29">Mᴏʜᴀᴍᴍᴇᴅ</a></b>
+<b>ɪᴛ ʜᴇʟᴘs ɪɴ ʙᴏᴛ ᴅᴇᴠᴇʟᴏᴘᴍᴇɴᴛ 🚀</b>
+
+➣ ᴜᴘɪ ɪᴅ: <b>ᴅᴍ <a href="https://t.me/Mr_Mohammed_29">Mᴏʜᴀᴍᴍᴇᴅ</a></b>
 """
 
     buttons = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton(
-                "• Dᴇᴠᴇʟᴏᴘᴇʀ •",
-                url="https://t.me/Mr_Mohammed_29"
-            )
-        ]
-    ])
+    [
+        InlineKeyboardButton(
+            "• ᴅᴇᴠᴇʟᴏᴘᴇʀ •",
+            url="https://t.me/Mr_Mohammed_29"
+        ),
+        InlineKeyboardButton(
+            "• ᴄʟᴏsᴇ •",
+            callback_data="close"
+        )
+    ]
+ ])
 
-    await msg.reply_text(
-        text,
-        reply_markup=buttons,
-        disable_web_page_preview=True
+    await msg.reply_photo(
+        photo=DONATE_IMAGE,
+        caption=text,
+        parse_mode=ParseMode.HTML,
+        reply_markup=buttons
     )
 
 # ------------------------- #
