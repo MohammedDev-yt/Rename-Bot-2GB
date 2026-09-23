@@ -209,6 +209,8 @@ After adding monitor click:
 
 ═★═★═★═ **🏆 Credits** ═★═★═★═  
 
+ᴅᴏɴ'ᴛ ʀᴇᴍᴏᴠᴇ ᴍʏ ᴄʀᴇᴅɪᴛ...
+
 - Developer: <a href="https://t.me/Mr_Mohammed_29"><b>ᴍᴏʜᴀᴍᴍᴇᴅ</b></a>  
 - Updates: <a href="https://t.me/Aero_Unity"><b>ᴀᴇʀᴏ ᴜɴɪᴛʏ</b></a>  
 
@@ -222,6 +224,6 @@ After adding monitor click:
   <a href="https://github.com/MohammedDev-yt/Rename-Bot-2GB" target="_blank">
   </a>
 </p>
-# ᴅᴏɴ'ᴛ ʀᴇᴍᴏᴠᴇ ᴍʏ ᴄʀᴇᴅɪᴛ...
+# 
 ---
 
